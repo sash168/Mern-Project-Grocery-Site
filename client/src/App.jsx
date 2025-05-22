@@ -8,6 +8,7 @@ import { useAppContext } from './context/AppContext';
 import Login from './components/Login';
 import AllProducts from './pages/AllProducts';
 import ProductCategory from './pages/ProductCategory';
+import ProductDetails from './pages/ProductDetails';
 
 function App() {
 
@@ -24,6 +25,7 @@ function App() {
           <Route path='/' element={<Home />}></Route>
           <Route path='/products' element={<AllProducts />}></Route>
           <Route path='/products/:category' element={<ProductCategory />}></Route>
+          <Route path='/products/:category/:id' element={<ProductDetails />}></Route>
           
         </Routes>
       </div>
