@@ -11,14 +11,20 @@ import ProductCategory from './pages/ProductCategory';
 import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/cart';
 import AddAddress from './pages/AddAddress';
+import MyOrder from './pages/MyOrder';
+import SellerLogin from './components/seller/SellerLogin';
+import SellerLayout from './pages/Seller/SellerLayout';
+import AddProduct from './pages/Seller/AddProduct';
+import ProductList from './pages/Seller/ProductList';
+import Orders from './pages/Seller/Orders';
 
 function App() {
 
   const isSellerPath = useLocation().pathname.includes("seller");
-  const { showUserLogin } = useAppContext();
+  const { showUserLogin, isSeller } = useAppContext();
 
   return (
-    <div>
+    <div className='text-default min-h-screen text-gray-700 bg-white'>
       {isSellerPath ? null : <Navbar />}
       {showUserLogin ? <Login/> : null}
       <Toaster/>
@@ -30,6 +36,12 @@ function App() {
           <Route path='/products/:category/:id' element={<ProductDetails />}></Route>
           <Route path='/cart' element={<Cart />}></Route>
           <Route path='/add-address' element={<AddAddress />}></Route>
+          <Route path='/my-orders' element={<MyOrder />}></Route>
+          <Route path='/seller' element={isSeller ? <SellerLayout/> :  <SellerLogin/>}>
+            <Route index element={isSeller ? <AddProduct /> : null} />
+            <Route path='product-list' element={<ProductList/>} />
+            <Route path='orders' element={<Orders/>} />
+          </Route>
 
         </Routes>
       </div>
