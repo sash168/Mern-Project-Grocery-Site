@@ -9,7 +9,7 @@ import Login from './components/Login';
 import AllProducts from './pages/AllProducts';
 import ProductCategory from './pages/ProductCategory';
 import ProductDetails from './pages/ProductDetails';
-import Cart from './pages/cart';
+import Cart from './pages/Cart';
 import AddAddress from './pages/AddAddress';
 import MyOrder from './pages/MyOrder';
 import SellerLogin from './components/seller/SellerLogin';
@@ -17,6 +17,7 @@ import SellerLayout from './pages/Seller/SellerLayout';
 import AddProduct from './pages/Seller/AddProduct';
 import ProductList from './pages/Seller/ProductList';
 import Orders from './pages/Seller/Orders';
+import Loading from './components/Loading';
 
 function App() {
 
@@ -37,6 +38,7 @@ function App() {
           <Route path='/cart' element={<Cart />}></Route>
           <Route path='/add-address' element={<AddAddress />}></Route>
           <Route path='/my-orders' element={<MyOrder />}></Route>
+          <Route path='/loader' element={<Loading />}></Route>
           <Route path='/seller' element={isSeller ? <SellerLayout/> :  <SellerLogin/>}>
             <Route index element={isSeller ? <AddProduct /> : null} />
             <Route path='product-list' element={<ProductList/>} />
