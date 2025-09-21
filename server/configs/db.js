@@ -2,14 +2,13 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
     try {
-        mongoose.connection.on('connected', () =>
-            console.log('Database connected')
-        );
-        await mongoose.connect(`${process.env.MONGODB_URI}/greencart`)
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log("Database connected");
+    } catch (error) {
+        console.error("Error occurred while establishing connection:", error.message);
+        process.exit(1);
     }
-    catch (error) {
-        console.error("Error occured while establishing connection: " , error.message);
-    }
-}
+};
 
 export default connectDB;
+
