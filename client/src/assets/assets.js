@@ -1,4 +1,4 @@
-import logo from "./logo.svg";
+import logo from "./rix.jpg";
 import search_icon from "./search_icon.svg";
 import remove_icon from "./remove_icon.svg";
 import arrow_right_icon_colored from "./arrow_right_icon_colored.svg";
@@ -140,6 +140,12 @@ export const categories = [
   {
     text: "Grains & Cereals",
     path: "Grains",
+    image: grain_image,
+    bgColor: "#F1E3F9",
+  },
+  {
+    text: "Others",
+    path: "Others",
     image: grain_image,
     bgColor: "#F1E3F9",
   },
