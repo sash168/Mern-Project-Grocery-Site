@@ -19,7 +19,7 @@ await connectDB()
 await connectCloudinary()
 
 //Allow multiple origin
-const allowedOrigins = ['http://localhost:5173'];
+const allowedOrigins = ['http://localhost:5173', 'https://sasha-grocery-site.vercel.app'];
 
 app.post('/stripe', express.raw({type:'application/json'}), stripeWebhooks)
 
@@ -27,6 +27,7 @@ app.post('/stripe', express.raw({type:'application/json'}), stripeWebhooks)
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({origin: function (origin, callback) {
+  console.log("origin :  " , origin);
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -43,8 +44,6 @@ app.use('/api/address', addressRouter);
 app.use('/api/order', ordreRouter);
 
 
-// app.listen(port, () => {
-//     console.log(`Server is running on http://localhost:${port}`)
-// })
-
-module.exports = app;
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`)
+})
