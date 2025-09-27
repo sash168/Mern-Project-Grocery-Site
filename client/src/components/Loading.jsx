@@ -7,7 +7,7 @@ function Loading() {
     const { navigate } = useAppContext();
     let { search } = useLocation()
     const query = new URLSearchParams(search);
-    const nextUrl = query.get(next);
+    const nextUrl = query.get("next");
 
     useEffect(() => {
         if (nextUrl) {

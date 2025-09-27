@@ -19,21 +19,21 @@ await connectDB()
 await connectCloudinary()
 
 //Allow multiple origin
-const allowedOrigins = ['http://localhost:5173', 'https://sasha-grocery-site.vercel.app'];
+const allowedOrigins = ['http://localhost:5173'];
 
 app.post('/stripe', express.raw({type:'application/json'}), stripeWebhooks)
 
 //Middleware Configs
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(cors({origin: allowedOrigins, credentials: true}));
 
 app.get('/', (req, res) => res.send("API is working"));
 app.use('/api/user', userRouter);
 app.use('/api/seller', sellerRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
-app.use('/api/address', addressRouter);
+app.use('/api/address', addressRouter); 
 app.use('/api/order', ordreRouter);
 
 
