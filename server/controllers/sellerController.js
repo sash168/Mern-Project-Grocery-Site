@@ -9,9 +9,9 @@ export const sellerLogin = async (req, res) => {
             const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
             res.cookie('sellerToken', token, {
-                httpOnly: true, //prevent js to access the cookie
-                secure: process.env.NODE_ENV === 'production', //use secure cookie in prod
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', //
+                httpOnly: true, // secure: can't be accessed by JS
+                secure: true, // must be true for HTTPS
+                sameSite: 'none',   
                 maxAge: 7 * 24 * 60 * 60 * 1000, //cookie expiration time
             })
     
@@ -44,10 +44,10 @@ export const isSellerAuth = async(req, res) => {
 export const sellerlogout = async (req, res) => {
     try {
         res.clearCookie('sellerToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-        });
+                httpOnly: true, // secure: can't be accessed by JS
+                secure: true, // must be true for HTTPS
+                sameSite: 'none',
+            })
         return res.json({
             success: true, message:"Seller Logged out"
         })
