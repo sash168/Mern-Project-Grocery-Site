@@ -37,6 +37,5 @@ app.use('/api/address', addressRouter);
 app.use('/api/order', ordreRouter);
 
 
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`)
-})
+export default app;
+
