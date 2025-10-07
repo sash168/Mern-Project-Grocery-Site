@@ -5,6 +5,27 @@
   font-family: "Outfit", sans-serif;
 }
 
+/* Global defaults */
+* {
+  user-select: none;        /* prevent text selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: auto;             /* don't force default cursor */
+}
+
+/* Allow pointer on elements that need it via class */
+.cursor-pointer {
+  cursor: pointer !important; /* override global auto */
+}
+
+/* Allow text selection & text cursor in inputs */
+input,
+textarea {
+  user-select: text;
+  cursor: text;
+}
+
 @theme{
   --color-primary: #4fbf8b;
   --color-dull-primary: #44ae7c;
@@ -13,3 +34,5 @@
 .no-srcollbar::-webkit-scrollbar{
   display: none;
 }
+
+

@@ -56,16 +56,40 @@ export const productById = async (req, res) => {
 }
 
 //change product stock
-export const changeStock = async (req, res) => {
-    try {
-        const { id, inStock } = req.body;
-        await Product.findByIdAndUpdate(id, {inStock})
+// export const changeStock = async (req, res) => {
+//     try {
+//         const { id, inStock } = req.body;
+//         await Product.findByIdAndUpdate(id, {inStock})
         
-        return res.json({
-            success:true, message: "Stock Updated"
-        })
-    } catch (e) {
-        console.log(e.message);
-        res.json({ success: false, message: "Error occured while updating Stock"+ e.message});
-    }
-}
+//         return res.json({
+//             success:true, message: "Stock Updated"
+//         })
+//     } catch (e) {
+//         console.log(e.message);
+//         res.json({ success: false, message: "Error occured while updating Stock"+ e.message});
+//     }
+// }
+
+export const changeStock = async (req, res) => {
+  try {
+    const { id, inStock, quantity } = req.body;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        inStock: quantity > 0 ? inStock : false,
+        quantity
+      },
+      { new: true }
+    );
+
+    return res.json({
+      success: true,
+      message: "Stock Updated",
+      product: updatedProduct
+    });
+  } catch (e) {
+    console.log(e.message);
+    res.json({ success: false, message: "Error updating stock: " + e.message });
+  }
+};

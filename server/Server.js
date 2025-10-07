@@ -19,7 +19,7 @@ await connectDB()
 await connectCloudinary()
 
 //Allow multiple origin
-const allowedOrigins = ['http://localhost:5173', 'https://sasha-grocery-site.vercel.app'];
+const allowedOrigins = ['http://localhost:5173', 'https://sasha-grocery-site.vercel.app', 'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 'https://sasha-grocery-site-q6b0l3peq-sashmita-mahapatros-projects.vercel.app'];
 
 app.post('/stripe', express.raw({type:'application/json'}), stripeWebhooks)
 
@@ -37,5 +37,6 @@ app.use('/api/address', addressRouter);
 app.use('/api/order', ordreRouter);
 
 
-export default app;
-
+app.listen(port, ()=>{
+    console.log('Server is running on port : ', port);
+})

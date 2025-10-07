@@ -8,27 +8,30 @@ function AllProducts() {
 
     useEffect(() => {
         if (searchQuery.length > 0) {
-            setFilteredProduct(products.filter(product => product.name.toLowerCase().includes(searchQuery.toLowerCase())))
+            setFilteredProduct(
+                products.filter(product => 
+                    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+            );
         } else {
             setFilteredProduct(products);
         }
-    },[products, searchQuery])
+    }, [products, searchQuery]);
 
-  return (
-      <div className='mt-16 flex flex-col'>
-          <div className='flex flex-col items-end w-max'>
-              <p className="text-2xl font-medium uppercase"> ALL PRODUCTS</p>
-              <div className='w-16 h-0.5 bg-primary rounded-full'></div>
-          </div>
+    return (
+        <div className='mt-16 px-4 md:px-16'>
+            <div className='flex flex-col items-end w-max'>
+                <p className="text-2xl font-medium uppercase">ALL PRODUCTS</p>
+                <div className='w-16 h-0.5 bg-primary rounded-full'></div>
+            </div>
 
-          <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6 mt-6'>
-              {filteredProduct.filter(product => product.inStock).map((product, ind) => (
-                  <ProductCard product={product} key={ind}/>
-              ))}
-          </div>
-          
-    </div>
-  )
+            <div className='grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4 mt-6'>
+                {filteredProduct.filter(product => product.inStock).map((product, ind) => (
+                    <ProductCard product={product} key={ind}/>
+                ))}
+            </div>
+        </div>
+    )
 }
 
-export default AllProducts
+export default AllProducts;

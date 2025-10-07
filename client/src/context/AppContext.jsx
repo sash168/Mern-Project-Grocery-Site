@@ -67,11 +67,42 @@ const AppContextProvider = ({ children }) => {
   };
 
   const addToCart = (itemId) => {
-    const cartData = structuredClone(cartItems);
-    cartData[itemId] = (cartData[itemId] || 0) + 1;
-    setCartItems(cartData);
-    toast.success("Added to Cart");
-  };
+    // Find the product in products array
+    const product = products.find(p => p._id === itemId);
+    if (!product) return;
+
+    // Check if product is out of stock
+    if (product.stock <= 0 || !product.inStock) {
+        toast.error(`${product.name} is out of stock`);
+        return; // Stop adding
+    }
+
+    // Optional: check if user is trying to exceed available stock
+    const currentQty = cartItems[itemId] || 0;
+    if (currentQty + 1 > product.stock) {
+        toast.error(`Cannot add more than available stock (${product.stock})`);
+        return;
+    }
+
+       // Update cart using functional state update to prevent stale state
+    setCartItems(prevCart => {
+        const currentQty = prevCart[itemId] || 0;
+
+        // Prevent exceeding stock
+        if (currentQty + 1 > product.quantity) {
+            toast.error(`Cannot add - Available stock : ${product.quantity}`);
+            return prevCart;
+        }else{
+          toast.success(`${product.name} added to cart`);
+        }
+
+        return {
+            ...prevCart,
+            [itemId]: currentQty + 1
+        };
+    });
+
+};
 
   const updateCartItem = (itemId, quantity) => {
     const cartData = structuredClone(cartItems);
@@ -132,6 +163,7 @@ const AppContextProvider = ({ children }) => {
     isSeller, setIsSeller,
     showUserLogin, setShowUserLogin,
     products,
+    setProducts,
     addToCart,
     currency,
     removeFromCart,

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAppContext } from '../../context/AppContext'
 import toast from 'react-hot-toast';
 
@@ -7,7 +7,8 @@ function ProductList() {
 
   const toggleStock = async (id, inStock) => {
     try {
-      const { data } = await axios.post('/api/product/stock', { id, inStock })
+      const product = products.find(p => p._id === id);
+      const { data } = await axios.post('/api/product/stock', { id, inStock, quantity: product.quantity })
       
       if (data.success) {
         fetchProducts();
@@ -20,6 +21,24 @@ function ProductList() {
     }
   }
 
+  
+  // Automatically mark out-of-stock products as not in stock
+  useEffect(() => {
+    const updateOutOfStock = async () => {
+      for (const product of products) {
+        if (product.quantity === 0 && product.inStock) {
+          try {
+            await axios.post('/api/product/stock', { id: product._id, inStock: false });
+          } catch (error) {
+            console.log('Error updating stock for', product.name);
+          }
+        }
+      }
+    };
+
+    if (products.length > 0) updateOutOfStock();
+  }, [products]);
+
   return (
     <div className="no-scollbar flex-1 h-[95vh] overflow-y-scroll flex flex-col justify-between">
       <div className="w-full md:p-10 p-4">
@@ -31,6 +50,7 @@ function ProductList() {
                 <th className="px-4 py-3 font-semibold truncate">Product</th>
                 <th className="px-4 py-3 font-semibold truncate">Category</th>
                 <th className="px-4 py-3 font-semibold truncate hidden md:block">Selling Price</th>
+                <th className="px-4 py-3 font-semibold truncate">Quantity</th> 
                 <th className="px-4 py-3 font-semibold truncate">In Stock</th>
               </tr>
             </thead>
@@ -45,9 +65,10 @@ function ProductList() {
                   </td>
                   <td className="px-4 py-3">{product.category}</td>
                   <td className="px-4 py-3 max-sm:hidden">{currency}{product.offerPrice}</td>
+                  <td className="px-4 py-3">{product.quantity}</td>
                   <td className="px-4 py-3">
                     <label className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
-                      <input onClick={() => toggleStock(product._id, !product.inStock)} type="checkbox" className="sr-only peer" defaultChecked={product.inStock} checked={product.inStock} />
+                      <input onChange={() => toggleStock(product._id, !product.inStock)} type="checkbox" className="sr-only peer" checked={product.inStock} />
                       <div className="w-12 h-7 bg-slate-300 rounded-full peer peer-checked:bg-blue-600 transition-colors duration-200"></div>
                       <span className="dot absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></span>
                     </label>

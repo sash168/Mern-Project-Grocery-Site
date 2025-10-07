@@ -8,13 +8,23 @@ export const placeOrderCOD = async (req, res) => {
     try {
         const { items, address } = req.body;
         const { userId } = req;
+        
         if (!address || items.length === 0) {
             return res.json({ success: FinalizationRegistry, message: "Invaid data" });
         }
-        let amount = await items.reduce(async (acc, item) => {
+        let amount = 0;
+
+        for (const item of items) {
             const product = await Product.findById(item.product);
-            return (await acc) + product.offerPrice * item.quantity;
-        }, 0);
+            if (!product) {
+                continue;
+            }
+            amount += product.offerPrice * item.quantity;
+
+            // Reduce stock
+            product.quantity = Math.max(product.quantity - item.quantity, 0);
+            await product.save();
+        }
 
         //add tax charge - 2%
         amount += Math.floor(amount * 0.02);
@@ -44,15 +54,23 @@ export const placeOrderStripe = async (req, res) => {
         }
 
         let productData = [];
-        let amount = await items.reduce(async (acc, item) => {
+        let amount = 0;
+        for (const item of items) {
             const product = await Product.findById(item.product);
+            if (!product) continue;
+
             productData.push({
                 name: product.name,
                 price: product.offerPrice,
                 quantity: item.quantity
-            })
-            return (await acc) + product.offerPrice * item.quantity;
-        }, 0);
+            });
+
+            amount += product.offerPrice * item.quantity;
+
+            // Reduce stock
+            product.quantity = Math.max(product.quantity - item.quantity, 0);
+            await product.save();
+        }
 
         //add tax charge - 2%
         amount += Math.floor(amount * 0.02);
