@@ -19,19 +19,23 @@ function AllProducts() {
     }, [products, searchQuery]);
 
     return (
-        <div className='mt-16 px-4 md:px-16'>
-            <div className='flex flex-col items-end w-max'>
-                <p className="text-2xl font-medium uppercase">ALL PRODUCTS</p>
-                <div className='w-16 h-0.5 bg-primary rounded-full'></div>
+        <div className="mt-20 px-3 sm:px-6 md:px-16">
+            <div className="flex flex-col items-end w-max mx-auto md:mx-0">
+                <p className="text-2xl md:text-3xl font-semibold uppercase tracking-wide">
+                    All Products
+                </p>
+                <div className="w-20 h-1 bg-primary rounded-full mt-1"></div>
             </div>
 
-            <div className='grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4 mt-6'>
-                {filteredProduct.filter(product => product.inStock).map((product, ind) => (
-                    <ProductCard product={product} key={ind}/>
-                ))}
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-10 justify-items-center">
+                {filteredProduct
+                    .filter(product => product.inStock)
+                    .map((product, ind) => (
+                        <ProductCard product={product} key={ind} />
+                    ))}
             </div>
         </div>
-    )
+    );
 }
 
 export default AllProducts;

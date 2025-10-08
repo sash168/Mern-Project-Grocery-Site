@@ -43,17 +43,18 @@ export const productList = async (req, res) => {
 //get individual product
 export const productById = async (req, res) => {
     try {
-        const { id } = req.body;
+        const { id } = req.params; // read from URL params
         const product = await Product.findById(id);
 
-        return res.json({
-            success:true, product
-        })
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+        return res.json({ success: true, product });
     } catch (e) {
         console.log(e.message);
-        res.json({ success: false, message: "Error occured while getting individual products"+ e.message});
+        res.status(500).json({ success: false, message: "Error occurred while getting individual product: " + e.message });
     }
-}
+};
 
 //change product stock
 // export const changeStock = async (req, res) => {
@@ -93,3 +94,39 @@ export const changeStock = async (req, res) => {
     res.json({ success: false, message: "Error updating stock: " + e.message });
   }
 };
+
+export const updateProduct = async (req, res) => {
+  try {
+    let productData = JSON.parse(req.body.productData);
+    const { _id, quantity } = productData;
+
+    let imagesUrl = [];
+    if (req.files && req.files.length > 0) {
+      imagesUrl = await Promise.all(
+        req.files.map(async (item) => {
+          let result = await cloudinary.uploader.upload(item.path, { resource_type: 'image' });
+          return result.secure_url;
+        })
+      );
+    }
+
+    const update = {
+      ...productData,
+      ...(imagesUrl.length > 0 && { image: imagesUrl }),
+      inStock: quantity > 0 ? true : false
+    };
+
+    const updatedProduct = await Product.findByIdAndUpdate(_id, update, { new: true });
+
+    if (!updatedProduct) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    res.json({ success: true, message: "Product updated successfully", product: updatedProduct });
+  } catch (e) {
+    console.log(e.message);
+    res.status(500).json({ success: false, message: "Error updating product: " + e.message });
+  }
+};
+
+

@@ -11,7 +11,6 @@ const InputField = ({ type, placeholder, name, handleChange, address }) => (
         onChange={handleChange}
         name={name}
         value={address[name]}
-        required
     />
 )
 

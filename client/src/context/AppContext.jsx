@@ -9,8 +9,6 @@ import axios from 'axios';
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
-console.log('backend url : ' + axios.defaults.baseURL);
-
 const AppContext = createContext();
 
 const AppContextProvider = ({ children }) => {
@@ -144,7 +142,6 @@ const AppContextProvider = ({ children }) => {
     const updateCart = async () => {
       try {
         const { data } = await axios.post('/api/cart/update', { cartItems })
-        console.log("sash cartItems : " + cartItems);
         if (!data.success) {
           toast.error(data.message);
         }
@@ -174,7 +171,7 @@ const AppContextProvider = ({ children }) => {
     getCardCount,
     axios,
     fetchProducts,
-    setCartItems
+    setCartItems,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
