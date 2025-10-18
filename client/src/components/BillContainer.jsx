@@ -35,7 +35,7 @@ const generateBill = () => {
     const total = subTotal + tax;
 
     doc.text(`Subtotal: ${currency}${subTotal}`, 14, y);
-    doc.text(`Tax (2%): ${currency}${tax.toFixed(2)}`, 14, y + 6);
+    doc.text(`Tax (0%): ${currency}${tax.toFixed(2)}`, 14, y + 6);
     doc.text(`Total: ${currency}${total.toFixed(2)}`, 14, y + 12);
 
     doc.save(`Invoice_${Date.now()}.pdf`);

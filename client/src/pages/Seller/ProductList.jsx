@@ -44,6 +44,22 @@ function ProductList() {
     if (products.length > 0) updateOutOfStock();
   }, [products]);
 
+  const deleteProduct = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+
+    try {
+      const { data } = await axios.delete(`/api/product/delete/${id}`);
+      if (data.success) {
+        toast.success(data.message);
+        fetchProducts();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   const handleEdit = (product) => {
     // Navigate to Add Product page with product data for editing
     navigate("/seller", { state: { productToEdit: { _id: product._id } } });
@@ -74,11 +90,13 @@ function ProductList() {
                   className="border-t border-gray-200 hover:bg-gray-50 transition-all"
                 >
                   <td className="px-3 sm:px-4 py-2 flex items-center gap-2 sm:gap-3">
-                    <img
+                   <div className="w-20 h-20 flex items-center justify-center border border-gray-300 rounded">    
+                    <img                 
                       src={product.image[0]}
                       alt="Product"
-                      className="w-12 sm:w-14 rounded border border-gray-300 object-cover"
+                      className="max-w-14 max-h-full object-cover rounded"
                     />
+                    </div>
                     <span className="truncate max-w-[120px] sm:max-w-[200px]">{product.name}</span>
                   </td>
 
@@ -103,12 +121,20 @@ function ProductList() {
                   </td>
 
                   <td className="px-3 sm:px-4 py-2">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      className="text-gray-600 bg-gray-300 px-3 py-1 rounded  transition"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="text-gray-600 bg-gray-300 px-3 py-1 rounded transition w-full sm:w-auto"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(product._id)}
+                        className="text-white bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition w-full sm:w-auto"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

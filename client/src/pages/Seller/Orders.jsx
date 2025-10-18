@@ -4,7 +4,7 @@ import { assets } from '../../assets/assets';
 import toast from 'react-hot-toast';
 
 function Orders() {
-  const { currency, axios } = useAppContext();
+  const { currency, axios, navigate } = useAppContext();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [filterType, setFilterType] = useState('all'); // 'all', 'today', '7days', 'custom'
@@ -123,6 +123,10 @@ function Orders() {
                     className={`font-medium text-sm md:text-base truncate ${
                       !item.product ? 'text-red-500' : ''
                     }`}
+                    onClick={() => {
+                    navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
+                    scrollTo(0, 0);
+                  }}
                   >
                     {item.product?.name || 'Deleted Product'} x {item.quantity}
                   </p>

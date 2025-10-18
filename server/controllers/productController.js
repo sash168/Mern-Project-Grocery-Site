@@ -1,31 +1,54 @@
 import { v2 as cloudinary } from 'cloudinary';
 import Product from '../models/Product.js';
 
-//add product
 export const addProduct = async (req, res) => {
-    try {
-        let productData = JSON.parse(req.body.productData);
+  try {
+    let productData = JSON.parse(req.body.productData);
+    const { name, category } = productData;
 
-        const images = req.files;
-
-        let imagesUrl = await Promise.all(
-            images.map(async(item) => {
-                let result = await cloudinary.uploader.upload(item.path, { resource_type: 'image' })
-                return result.secure_url
-            })
-        )
-
-        await Product.create({
-            ...productData, image: imagesUrl
-        })
-
-        res.json({success: true, message: "Product Added"})
+    const existingProduct = await Product.findOne({ name, category });
+    if (existingProduct) {
+      return res.status(400).json({
+        success: false,
+        message: `Product "${name}" in category "${category}" already exists.`,
+      });
     }
-    catch (e) {
-        console.log(e.message);
-        res.json({ success: false, message: "Error occured while adding product "+ e.message});
+
+    const images = req.files || [];
+    const imagesUrl = await Promise.all(
+      images.map(async (item) => {
+        const result = await cloudinary.uploader.upload(item.path, { resource_type: 'image' });
+        return result.secure_url;
+      })
+    );
+
+    await Product.create({ ...productData, image: imagesUrl });
+
+    return res.status(200).json({
+      success: true,
+      message: "Product added successfully.",
+    });
+
+  } catch (e) {
+    console.log("❌ Error adding product:", e);
+
+    // Handle duplicate key error (Mongo unique index)
+    if (e.code === 11000) {
+      const keys = Object.keys(e.keyPattern || {});
+      return res.status(400).json({
+        success: false,
+        message: `Duplicate entry for ${keys.join(", ")} — product already exists.`,
+      });
     }
-}
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error: " + e.message,
+    });
+  }
+};
+
+
 
 //get product list
 export const productList = async (req, res) => {
@@ -129,4 +152,23 @@ export const updateProduct = async (req, res) => {
   }
 };
 
+// Delete a product
+export const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedProduct = await Product.findByIdAndDelete(id);
+    if (!deletedProduct) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    return res.json({
+      success: true,
+      message: `Product "${deletedProduct.name}" deleted successfully.`,
+    });
+  } catch (e) {
+    console.log("Error deleting product:", e);
+    return res.status(500).json({ success: false, message: "Server error: " + e.message });
+  }
+};
 
