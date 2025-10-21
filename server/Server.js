@@ -24,7 +24,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const HOST = '192.168.0.106' || '0.0.0.0'; // use 0.0.0.0 for testing; keep your static IP in env if needed
+const HOST = '0.0.0.0'; // use 0.0.0.0 for testing; keep your static IP in env if needed
 const CERT_KEY = process.env.CERT_KEY || path.join(__dirname, '192.168.0.106+2-key.pem');
 const CERT_PEM = process.env.CERT_PEM || path.join(__dirname, '192.168.0.106+2.pem');
 // ...existing code...
