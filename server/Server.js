@@ -16,9 +16,11 @@ import { stripeWebhooks } from './controllers/orderController.js';
 import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { specs, swaggerUi } from './configs/swagger.js';
 
 // ...existing code...
 const app = express();
+const port = process.env.PORT || 4000;
 
 // Ensure certs are read relative to this file
 const __filename = fileURLToPath(import.meta.url);
@@ -39,7 +41,7 @@ await connectCloudinary();
 //Allow multiple origin
 const allowedOrigins = [
   'http://localhost:5173', 
-  'http://192.168.1.36:5173', // Your local network IP
+  'http://192.168.1.37:5173', // Your local network IP
   'http://0.0.0.0:5173',
   'https://sasha-grocery-site.vercel.app', 
   'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 
@@ -76,6 +78,13 @@ app.use('/api/cart', cartRouter);
 app.use('/api/address', addressRouter);
 app.use('/api/order', ordreRouter);
 
+app.use('/api-docs',swaggerUi.serve,swaggerUi.setup(specs,{
+    explorer: true,
+    customCss: '.swagger-ui .topbar {display: none }',
+    customSiteTitle: 'Grocery Store API',
+}));
+
+app.get('/docs', (req, res) => res.redirect('/api-docs'));
 
 app.listen(port, '0.0.0.0', ()=>{
     console.log(`Server is running on http://0.0.0.0:${port}`);

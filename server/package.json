@@ -22,7 +22,9 @@
     "mongoose": "^8.16.1",
     "morgan": "^1.10.1",
     "multer": "^2.0.1",
-    "stripe": "^18.3.0"
+    "stripe": "^18.3.0",
+    "swagger-jsdoc": "^3.7.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
