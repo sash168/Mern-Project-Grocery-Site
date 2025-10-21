@@ -19,7 +19,14 @@ await connectDB()
 await connectCloudinary()
 
 //Allow multiple origin
-const allowedOrigins = ['http://localhost:5173', 'https://sasha-grocery-site.vercel.app', 'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 'https://sasha-grocery-site-q6b0l3peq-sashmita-mahapatros-projects.vercel.app'];
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://192.168.1.36:5173', // Your local network IP
+  'http://0.0.0.0:5173',
+  'https://sasha-grocery-site.vercel.app', 
+  'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 
+  'https://sasha-grocery-site-q6b0l3peq-sashmita-mahapatros-projects.vercel.app'
+];
 
 app.post('/stripe', express.raw({type:'application/json'}), stripeWebhooks)
 
@@ -37,6 +44,8 @@ app.use('/api/address', addressRouter);
 app.use('/api/order', ordreRouter);
 
 
-app.listen(port, ()=>{
-    console.log('Server is running on port : ', port);
+app.listen(port, '0.0.0.0', ()=>{
+    console.log(`Server is running on http://0.0.0.0:${port}`);
+    console.log(`Local access: http://localhost:${port}`);
+    console.log(`Network access: http://192.168.1.36:${port}`);
 })
