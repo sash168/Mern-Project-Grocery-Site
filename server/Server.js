@@ -36,14 +36,13 @@ const credentials = { key: privateKey, cert: certificate };
 await connectDB();
 await connectCloudinary();
 
-// Set allowed CORS origins
+//Allow multiple origin
 const allowedOrigins = [
-  'https://192.168.0.106:4000',
-  'capacitor://localhost',
-  'https://localhost',
-  'http://localhost:5173',
-  'https://sasha-grocery-site.vercel.app',
-  'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app',
+  'http://localhost:5173', 
+  'http://192.168.1.36:5173', // Your local network IP
+  'http://0.0.0.0:5173',
+  'https://sasha-grocery-site.vercel.app', 
+  'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 
   'https://sasha-grocery-site-q6b0l3peq-sashmita-mahapatros-projects.vercel.app'
 ];
 
@@ -77,14 +76,9 @@ app.use('/api/cart', cartRouter);
 app.use('/api/address', addressRouter);
 app.use('/api/order', ordreRouter);
 
-// Global error handler should be last
-app.use((err, req, res, next) => {
-  console.error("Global error handler:", err.stack || err);
-  res.status(500).json({ message: "Internal Server Error" });
-});
 
-// Allow override for easier testing; set HOST=0.0.0.0 to accept all interfaces
-https.createServer(credentials, app).listen(4000, HOST, () => {
-  console.log(`HTTPS server running on ${HOST}:4000`);
-});
-// ...existing code...
+app.listen(port, '0.0.0.0', ()=>{
+    console.log(`Server is running on http://0.0.0.0:${port}`);
+    console.log(`Local access: http://localhost:${port}`);
+    console.log(`Network access: http://192.168.1.36:${port}`);
+})

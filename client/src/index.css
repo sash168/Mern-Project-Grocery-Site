@@ -26,13 +26,13 @@ textarea {
   cursor: text;
 }
 
-@theme{
-  --color-primary: #4fbf8b;
-  --color-dull-primary: #44ae7c;
-}
-
 .no-srcollbar::-webkit-scrollbar{
   display: none;
 }
 
+/* Custom CSS Variables for your theme */
+:root {
+  --color-primary: #4fbf8b;
+  --color-dull-primary: #44ae7c;
+}
 
