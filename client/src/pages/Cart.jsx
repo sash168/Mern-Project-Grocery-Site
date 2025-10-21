@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import toast from "react-hot-toast";
+import { Trash2 } from "lucide-react";
 
 const Cart = () => {
   const {
@@ -81,13 +82,14 @@ const Cart = () => {
 
   const placeOrder = async () => {
     if (!customerName.trim()) return toast.error("Please enter a valid customer name");
-
+    if (!selectedAddress || !selectedAddress.trim()) return toast.error("Please enter your adress");
+    console.log("sash user : " + user + " selectedAddress : " + selectedAddress);
     const orderAddress = selectedAddress ? selectedAddress._id : "NA";
     try {
       const { data } = await axios.post('/api/order/cod', {
         userId: user._id,
         items: cartArray.map(item => ({ product: item._id, quantity: item.quantity })),
-        address: selectedAddress._id,
+        address: selectedAddress?._id,
         customerName: customerName.trim(),
         customerNumber: customerNumber.trim()
       });
@@ -177,8 +179,12 @@ const Cart = () => {
             </p>
 
             <div className="flex justify-center md:justify-start">
-              <button onClick={() => removeFromCart(product._id)} className="text-red-500 hover:text-red-700">
-                <img src={assets.remove_icon} alt="Remove" className="w-6 h-6"/>
+              <button
+                onClick={() => removeFromCart(product._id)}
+                className="hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition"
+                title="Remove item"
+              >
+                <Trash2 className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -207,9 +213,15 @@ const Cart = () => {
       <p className="text-sm font-medium uppercase mt-4">Delivery Address (Optional)</p>
       <div className="relative mt-2">
         <p className="text-gray-600 text-sm">
-          {selectedAddress
-            ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.country}`
-            : "No address selected"}
+          {selectedAddress 
+            ? [
+                selectedAddress.street,
+                selectedAddress.city,
+                selectedAddress.state,
+                selectedAddress.country
+              ].filter(Boolean).join(", ")
+            : "No address selected"
+          }
         </p>
         <button onClick={() => setShowAddress(!showAddress)} className="text-primary hover:underline text-sm">Change</button>
         {showAddress && (
@@ -227,7 +239,7 @@ const Cart = () => {
       <div className="mt-4 space-y-2 text-gray-600">
         <p className="flex justify-between"><span>Price</span><span>{currency}{getCardAmount().toFixed(2)}</span></p>
         <p className="flex justify-between"><span>Shipping Fee</span><span className="text-green-600">Free</span></p>
-        <p className="flex justify-between"><span>Tax (2%)</span><span>{currency}{(getCardAmount()*0.02).toFixed(2)}</span></p>
+        <p className="flex justify-between"><span>Tax (0%)</span><span>{currency}{(getCardAmount()).toFixed(2)}</span></p>
         <p className="flex justify-between text-lg font-medium mt-2"><span>Total Amount:</span><span>{currency}{(getCardAmount()*1.02).toFixed(2)}</span></p>
       </div>
 

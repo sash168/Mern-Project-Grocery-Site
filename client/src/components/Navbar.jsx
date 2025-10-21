@@ -43,7 +43,7 @@ function Navbar() {
                 <div className="hidden sm:flex items-center gap-6 md:gap-8">
                     <NavLink to='/' className="hover:text-primary transition">Home</NavLink>
                     <NavLink to='/products' className="hover:text-primary transition">All Products</NavLink>
-                    <NavLink to='/'>Contact</NavLink>
+                    <NavLink to='/contact'>Contact</NavLink>
                 </div>
 
                 {/* Right side: Search (desktop), Cart & User */}
@@ -78,11 +78,13 @@ function Navbar() {
                     ) : (
                         <div className='relative group'>
                             <img src={assets.profile_icon} className='w-10 cursor-pointer' alt='profile' />
-                            <ul className='hidden group-hover:block absolute top-10 right-0 bg-white shadow border border-gray-200 py-2.5 w-32 rounded-md text-sm z-50'>
+                            <ul className='hidden group-hover:block absolute top-10 right-0 bg-white shadow border border-gray-200 py-2.5 w-40 rounded-md text-sm z-50'>
                                 <li onClick={() => navigate('/my-orders')} className='p-2 hover:bg-primary/10 cursor-pointer'>My Order</li>
+                                <li onClick={() => navigate('/seller')} className='p-2 hover:bg-primary/10 cursor-pointer'>Seller Login</li>
                                 <li onClick={logout} className='p-2 hover:bg-primary/10 cursor-pointer'>Logout</li>
                             </ul>
                         </div>
+
                     )}
 
                     {/* Mobile Menu Button */}

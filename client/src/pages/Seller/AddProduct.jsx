@@ -74,15 +74,27 @@ function AddProduct() {
       const { data } = await axios.post(url, formData);
 
       if (data.success) {
-        toast.success(productToEditId ? 'Product updated successfully' : 'Product added successfully');
-        await fetchProducts(); 
-        navigate('/seller/product-list', { replace: true });
+        toast.success(
+          productToEditId ? "Product updated successfully" : "Product added successfully"
+        );
+        await fetchProducts();
+        navigate("/seller/product-list", { replace: true });
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Something went wrong while saving the product");
       }
 
     } catch (error) {
-      toast.error(error.message);
+      // Backend (Express) sends error JSON like: { success: false, message: "Product already exists" }
+      const backendMessage = error.response?.data?.message;
+
+      if (backendMessage) {
+        toast.error(backendMessage);
+      } else {
+        // fallback if backend didn't send proper message
+        toast.error("Something went wrong while adding product.");
+      }
+
+      console.error("Add Product Error:", error.response?.data || error.message);
     }
   };
 
@@ -138,13 +150,19 @@ function AddProduct() {
             ))}
           </select>
         </div>
-        <div className="flex-1 flex flex-col gap-1 w-32">
+        <div className="flex-1 flex flex-col gap-1 w-full md:w-32">
           <label className="text-base font-medium" htmlFor="product-quantity">Quantity</label>
-          <input onChange={(e)=> setQuantity(e.target.value)} value={quantity}
-            id="product-quantity" type="number" placeholder="0"
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40" required
+          <input
+            onChange={(e)=> setQuantity(e.target.value)}
+            value={quantity}
+            id="product-quantity"
+            type="number"
+            placeholder="0"
+            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40 w-full"
+            required
           />
         </div>
+
         <div className="flex items-center gap-5 flex-wrap">
           <div className="flex-1 flex flex-col gap-1 w-32">
             <label className="text-base font-medium" htmlFor="product-price">Product Price</label>

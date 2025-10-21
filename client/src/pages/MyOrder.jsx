@@ -5,7 +5,7 @@ import { downloadInvoicePDF, printInvoice } from './InvoiceHelper';
 
 function MyOrder() {
   const [myOrders, setMyOrders] = useState([]);
-  const { currency, axios, user } = useAppContext();
+  const { currency, axios, user, navigate } = useAppContext();
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -44,7 +44,10 @@ function MyOrder() {
 
               {selectedOrder.items.map((item,index) => (
                 <div key={index} className="flex justify-between text-sm mb-1">
-                  <span>{item.product?.name || item.name || "Deleted Product"} (x{item.quantity})</span>
+                  <span onClick={() => {
+                    navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
+                    scrollTo(0, 0);
+                  }}>{item.product?.name || item.name || "Deleted Product"} (x{item.quantity})</span>
                   <span>{currency}{((item.product?.offerPrice || item.offerPrice || 0) * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
@@ -61,15 +64,10 @@ function MyOrder() {
 
               <div className="flex gap-2 mt-3">
                 <button onClick={() => downloadInvoicePDF(selectedOrder, currency, user)}
-                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                Download PDF
-                </button>
-
+                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Download PDF</button>
                 <button onClick={() => printInvoice(selectedOrder, currency, user)}
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Print Bill
-                </button>              
-            </div>
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Print Bill</button>
+              </div>
             </div>
           </div>
         </div>
@@ -90,7 +88,10 @@ function MyOrder() {
 
           {order.items.map((item, idx) => (
             <div key={idx} className={`relative bg-white text-gray-500/70 ${order.items.length !== idx+1 && "border-b"} border-gray-300 flex flex-col sm:flex-row sm:items-center justify-between pt-4 pb-4 sm:gap-8 w-full`}>
-              <div className='flex items-center mb-4 md:mb-0'>
+              <div className='flex items-center mb-4 md:mb-0' onClick={() => {
+                    navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
+                    scrollTo(0, 0);
+                  }}>
                 <div className='bg-primary/10 p-4 rounded-lg'>
                   <img src={item.product?.image?.[0] || assets.box_icon} alt={item.product?.name || "Deleted Product"} className='w-16 h-16 sm:w-20 sm:h-20 object-cover rounded'/>
                 </div>

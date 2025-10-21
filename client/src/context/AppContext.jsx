@@ -154,6 +154,9 @@ const AppContextProvider = ({ children }) => {
     }
   },[cartItems])
 
+  console.log("products:", products);
+  console.log("cartItems:", cartItems);
+
   const value = {
     navigate,
     user, setUser,
