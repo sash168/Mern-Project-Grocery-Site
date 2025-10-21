@@ -10,10 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@awesome-cordova-plugins/bluetooth-serial": "^8.1.0",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
     "@tailwindcss/vite": "^4.1.6",
     "axios": "^1.10.0",
+    "cordova-plugin-bluetooth-serial": "^0.4.7",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^5.0.2",
+    "lucide-react": "^0.545.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",

@@ -81,10 +81,13 @@ const Cart = () => {
   };
 
   const placeOrder = async () => {
-    if (!customerName.trim()) return toast.error("Please enter a valid customer name");
-    if (!selectedAddress || !selectedAddress.trim()) return toast.error("Please enter your adress");
+    if (!customerName.trim()) 
+      return toast.error("Please enter a valid customer name");
+
+    if (!selectedAddress || !selectedAddress._id) 
+      return toast.error("Please select a valid address");
+
     console.log("sash user : " + user + " selectedAddress : " + selectedAddress);
-    const orderAddress = selectedAddress ? selectedAddress._id : "NA";
     try {
       const { data } = await axios.post('/api/order/cod', {
         userId: user._id,
@@ -210,7 +213,7 @@ const Cart = () => {
         <input type="text" value={customerNumber} onChange={e => setCustomerNumber(e.target.value)} placeholder="Enter customer number" className="w-full px-3 py-2 rounded border border-gray-300 text-sm"/>
       </div>
 
-      <p className="text-sm font-medium uppercase mt-4">Delivery Address (Optional)</p>
+      <p className="text-sm font-medium uppercase mt-4">Delivery Address *</p>
       <div className="relative mt-2">
         <p className="text-gray-600 text-sm">
           {selectedAddress 
@@ -261,9 +264,18 @@ const Cart = () => {
         </button>
       )}
 
-      <button onClick={placeOrder} className="w-full py-3 mt-2 bg-primary text-white rounded hover:bg-dull-primary transition font-medium">
+      <button
+        onClick={placeOrder}
+        disabled={!selectedAddress}
+        className={`w-full py-3 mt-2 rounded font-medium transition ${
+          selectedAddress
+            ? "bg-primary text-white hover:bg-dull-primary"
+            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+        }`}
+      >
         Place Order & Print
       </button>
+
     </div>
 
 

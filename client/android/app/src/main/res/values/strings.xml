@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MyBillingStore</string>
+    <string name="title_activity_main">MyBillingStore</string>
+    <string name="package_name">com.billing.sasha</string>
+    <string name="custom_url_scheme">com.billing.sasha</string>
+</resources>

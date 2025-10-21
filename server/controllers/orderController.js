@@ -9,8 +9,8 @@ export const placeOrderCOD = async (req, res) => {
     const { items, address, customerName, customerNumber } = req.body;
     const { userId } = req;
 
-    if (!address || items.length === 0 || !customerName) {
-      return res.json({ success: false, message: "Invalid data" });
+    if (!address || !mongoose.Types.ObjectId.isValid(address) || items.length === 0 || !customerName.trim()) {
+      return res.json({ success: false, message: "Address and valid customer details are required" });
     }
 
     let amount = 0;

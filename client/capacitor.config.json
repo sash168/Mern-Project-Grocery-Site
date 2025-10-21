@@ -1,0 +1,8 @@
+{
+  "appId": "com.billing.sasha",
+  "appName": "MyBillingStore",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true
+  }
+}
