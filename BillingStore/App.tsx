@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Button, Alert, Text, Platform, PermissionsAndroid } from 'react-native';
+import { 
+  View, 
+  Button, 
+  Alert, 
+  Text, 
+  Platform, 
+  PermissionsAndroid, 
+  StyleSheet,
+  SafeAreaView
+} from 'react-native';
 import { BLEPrinter, type IBLEPrinter } from 'react-native-thermal-receipt-printer';
-import MainBanner from './src/components/MainBanner';
 
 const requestBluetoothPermissions = async () => {
   if (Platform.OS === 'android' && Platform.Version >= 31) {
@@ -49,9 +57,9 @@ const App = () => {
     try {
       const devices = await BLEPrinter.getDeviceList();
       console.log('Devices:', devices);
-      if (!devices) { 
-        Alert.alert('Devices found', 'No devices returned or getDeviceList() failed'); 
-        return; 
+      if (!devices) {
+        Alert.alert('Devices found', 'No devices returned or getDeviceList() failed');
+        return;
       }
       if (!Array.isArray(devices) || devices.length === 0) {
         Alert.alert('No Printers', 'No Bluetooth printers found nearby');
@@ -88,14 +96,58 @@ const App = () => {
   };
 
   return (
-    <View style={{ paddingTop: 100, alignItems: 'center' }}>
-      <MainBanner />
-      <Button title="Connect Bluetooth Printer" onPress={connectPrinter} />
-      <View style={{ height: 20 }} />
-      <Button title="Print Receipt" onPress={printReceipt} />
-      {printer && <Text style={{ marginTop: 20 }}>Connected to: {printer.device_name}</Text>}
-    </View>
+    <SafeAreaView style={styles.container}>
+      {/* 🔹 Top Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerText}>🖨️ Bluetooth Printer App</Text>
+      </View>
+
+      {/* 🔹 Buttons */}
+      <View style={styles.buttonContainer}>
+        <Button title="Connect Bluetooth Printer" onPress={connectPrinter} />
+        <View style={{ height: 20 }} />
+        <Button title="Print Receipt" onPress={printReceipt} />
+      </View>
+
+      {/* 🔹 Printer Info */}
+      {printer && (
+        <Text style={styles.connectedText}>
+          ✅ Connected to: {printer.device_name}
+        </Text>
+      )}
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+    alignItems: 'center',
+  },
+  header: {
+    width: '100%',
+    backgroundColor: '#2563EB',
+    paddingVertical: 18,
+    alignItems: 'center',
+    elevation: 3,
+  },
+  headerText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    marginTop: 80,
+    width: '80%',
+    alignItems: 'center',
+  },
+  connectedText: {
+    marginTop: 30,
+    fontSize: 16,
+    color: '#16A34A',
+    fontWeight: '500',
+  },
+});
 
 export default App;

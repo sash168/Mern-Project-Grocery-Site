@@ -41,7 +41,7 @@ await connectCloudinary();
 //Allow multiple origin
 const allowedOrigins = [
   'http://localhost:5173', 
-  'http://192.168.1.37:5173', // Your local network IP
+  'http://192.168.0.102:5173',
   'http://0.0.0.0:5173',
   'https://sasha-grocery-site.vercel.app', 
   'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 
@@ -89,5 +89,4 @@ app.get('/docs', (req, res) => res.redirect('/api-docs'));
 app.listen(port, '0.0.0.0', ()=>{
     console.log(`Server is running on http://0.0.0.0:${port}`);
     console.log(`Local access: http://localhost:${port}`);
-    console.log(`Network access: http://192.168.1.36:${port}`);
 })

@@ -90,8 +90,6 @@ const AppContextProvider = ({ children }) => {
         if (currentQty + 1 > product.quantity) {
             toast.error(`Cannot add - Available stock : ${product.quantity}`);
             return prevCart;
-        }else{
-          toast.success(`${product.name} added to cart`);
         }
 
         return {
@@ -153,9 +151,6 @@ const AppContextProvider = ({ children }) => {
       updateCart();
     }
   },[cartItems])
-
-  console.log("products:", products);
-  console.log("cartItems:", cartItems);
 
   const value = {
     navigate,

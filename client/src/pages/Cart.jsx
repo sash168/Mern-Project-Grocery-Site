@@ -71,8 +71,10 @@ const Cart = () => {
                 <p>Customer: ${order.customerName || user?.name || "Guest"}</p>
                 <p>Contact: ${order.customerNumber || "N/A"}</p>
                 <hr>`;
-    order.items.forEach(item => {
-      html += `<p>${item.product?.name || "Deleted Product"} x${item.quantity} = ${currency}${(item.product?.offerPrice || 0) * item.quantity}</p>`;
+        order.items.forEach(item => {
+      const name = item.name || item.product?.name || "Deleted Product";
+      const price = item.offerPrice || item.product?.offerPrice || 0;
+      html += `<p>${name} × ${item.quantity} = ${currency}${(price * item.quantity).toFixed(2)}</p>`;
     });
     html += `<hr><p>Subtotal: ${currency}${order.amount.toFixed(2)}</p>`;
     printWindow.document.write(html);

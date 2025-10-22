@@ -66,6 +66,7 @@ function Navbar() {
                         {getCardCount() > 0 && (
                             <span className="absolute -top-2 -right-3 text-xs text-white bg-primary w-5 h-5 flex items-center justify-center rounded-full">
                                 {getCardCount()}
+                                {console.log(getCardCount())}
                             </span>
                         )}
                     </div>
