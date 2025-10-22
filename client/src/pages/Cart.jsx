@@ -3,6 +3,8 @@ import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import toast from "react-hot-toast";
 import { Trash2 } from "lucide-react";
+import { downloadInvoicePDF, printInvoice } from './InvoiceHelper';
+
 
 const Cart = () => {
   const {
@@ -256,7 +258,8 @@ const Cart = () => {
               customerName: customerName || user?.name || "Guest",
               customerNumber: customerNumber || "N/A",
               items: cartArray,
-              amount: getCardAmount()
+              amount: getCardAmount(),
+              createdAt: new Date() // make sure createdAt exists like MyOrder
             });
             setShowInvoiceModal(true);
           }}
@@ -283,37 +286,82 @@ const Cart = () => {
 
       {/* INVOICE MODAL */}
       {showInvoiceModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowInvoiceModal(false)}>
-          <div className="bg-white p-6 rounded shadow-lg w-[90%] max-w-md md:max-w-lg relative max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowInvoiceModal(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-900 font-bold">X</button>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowInvoiceModal(false)}
+        >
+          <div
+            className="bg-white p-6 rounded shadow-lg w-[90%] max-w-md md:max-w-lg relative max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowInvoiceModal(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-900 font-bold"
+            >
+              X
+            </button>
             <h2 className="text-xl font-medium mb-3">Invoice Preview</h2>
-            <div className="bg-white p-4 rounded border border-gray-300 hover:bg-gray-50 transition rounded-md">
-              <p className="text-xs">Invoice No: INV{new Date().getTime()}</p>
-              <p className="text-sm">Customer: {selectedOrder.customerName || user?.name || "Guest"}</p>
+
+            <div className="bg-white p-4 rounded border border-gray-300 hover:bg-gray-50 transition">
+              <p className="text-sm">
+                Date: {new Date(selectedOrder.createdAt || Date.now()).toLocaleDateString()}
+              </p>
+              <p className="text-sm font-medium">
+                Customer: {selectedOrder.customerName || user?.name || "Guest"}
+              </p>
               <p className="text-sm">Contact: {selectedOrder.customerNumber || "N/A"}</p>
-              <hr className="my-2"/>
-              {selectedOrder.items.map((item,index) => (
-                <div key={index} className="flex justify-between text-sm mb-1">
-                  <span>{item.name || item.product?.name || "Deleted Product"} (x{item.quantity})</span>
-                  <span>{currency}{((item.product?.offerPrice || item.offerPrice || 0) * item.quantity).toFixed(2)}</span>
+              <hr className="my-2" />
+
+              {selectedOrder.items.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between text-sm mb-1"
+                >
+                  <span
+                    onClick={() => {
+                      if (item.product?._id && item.product?.category)
+                        navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
+                      scrollTo(0, 0);
+                    }}
+                  >
+                    {item.product?.name || item.name || "Deleted Product"} (x{item.quantity})
+                  </span>
+                  <span>
+                    {currency}
+                    {((item.product?.offerPrice || item.offerPrice || 0) * item.quantity).toFixed(2)}
+                  </span>
                 </div>
               ))}
-              <hr className="my-2"/>
+
+              <hr className="my-2" />
               <p className="flex justify-between font-medium text-base">
                 <span>Total Quantity:</span>
-                <span>{selectedOrder.items.reduce((sum,i)=>sum+i.quantity,0)}</span>
+                <span>{selectedOrder.items.reduce((sum, i) => sum + i.quantity, 0)}</span>
               </p>
               <p className="flex justify-between font-bold text-lg mt-2">
                 <span>Subtotal:</span>
                 <span>{currency}{selectedOrder.amount.toFixed(2)}</span>
               </p>
+
               <div className="flex gap-2 mt-3">
-                <button onClick={()=>printBill(selectedOrder)} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Print Bill</button>
+                <button
+                  onClick={() => downloadInvoicePDF(selectedOrder, currency, user)}
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                >
+                  Download PDF
+                </button>
+                <button
+                  onClick={() => printInvoice(selectedOrder, currency, user)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Print Bill
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
 
     </div>
   );

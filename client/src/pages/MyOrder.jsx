@@ -37,7 +37,6 @@ function MyOrder() {
             <h2 className="text-xl font-medium mb-3">Invoice Preview</h2>
 
             <div className="bg-white p-4 rounded border border-gray-300 hover:bg-gray-50 transition">
-              <p className="text-xs">Invoice No: INV{new Date(selectedOrder.createdAt).getTime()}</p>
               <p className="text-sm">Date: {new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
               <p className="text-sm font-medium">Customer: {selectedOrder.customerName || user?.name || "Guest"}</p>
               <p className="text-sm">Contact: {selectedOrder.customerNumber || "N/A"}</p>

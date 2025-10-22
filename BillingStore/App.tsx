@@ -67,12 +67,20 @@ const App = () => {
       }
 
       const selectedPrinter = devices[0];
+      if (printer && printer.inner_mac_address === selectedPrinter.inner_mac_address) {
+        Alert.alert('Already Connected', `Already connected to ${selectedPrinter.device_name}`);
+        return;
+      }
       await BLEPrinter.connectPrinter(selectedPrinter.inner_mac_address);
       setPrinter(selectedPrinter);
       Alert.alert('Connected', `Connected to ${selectedPrinter.device_name}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      Alert.alert('Connection Error', message);
+      if (message.includes('Socket failure')) {
+          Alert.alert('Connected', 'Problem connecting to printer. It might already be connected or out of range.');
+      } else {
+          Alert.alert('Connection Error', message);
+      }
     }
   };
 
