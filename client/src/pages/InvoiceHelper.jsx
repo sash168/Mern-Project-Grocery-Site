@@ -1,7 +1,27 @@
 import jsPDF from "jspdf";
+import toast from "react-hot-toast";
+import { useAppContext } from "../context/AppContext"; // Assuming you have axios here
+
+// Helper to send print job to backend
+export const sendPrintJobToBackend = async (order, axios) => {
+  try {
+    const res = await axios.post("/api/print/create", {
+      printerId: null, // optional, if you have multiple printers
+      text: JSON.stringify(order) // backend expects "text"
+    });
+    if (res.data.success || res.data.message) {
+      toast.success(res.data.message || "Print job sent!");
+    } else {
+      toast.error("Failed to send print job");
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Error sending print job");
+  }
+};
 
 // Download invoice PDF
-export const downloadInvoicePDF = (order, currency, user, orderIndex = 1, companyName = "BS Soda") => {
+export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, companyName = "BS Soda") => {
   const doc = new jsPDF();
   let y = 20;
   const now = new Date();
@@ -23,14 +43,10 @@ export const downloadInvoicePDF = (order, currency, user, orderIndex = 1, compan
 
   doc.setFontSize(12);
   doc.setFont(undefined, "normal");
-  doc.text(`Invoice No: ${invoiceNo}`, 10, y);
-  y += 7;
-  doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 10, y);
-  y += 7;
-  doc.text(`Customer: ${order.customerName || user?.name || "Guest"}`, 10, y);
-  y += 7;
-  doc.text(`Contact: ${order.customerNumber || "N/A"}`, 10, y);
-  y += 10;
+  doc.text(`Invoice No: ${invoiceNo}`, 10, y); y += 7;
+  doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 10, y); y += 7;
+  doc.text(`Customer: ${order.customerName || user?.name || "Guest"}`, 10, y); y += 7;
+  doc.text(`Contact: ${order.customerNumber || "N/A"}`, 10, y); y += 10;
 
   // Table header
   doc.setFont(undefined, "bold");
@@ -62,16 +78,14 @@ export const downloadInvoicePDF = (order, currency, user, orderIndex = 1, compan
 
   // Totals
   doc.setFont(undefined, "bold");
-  doc.text(`Total Quantity: ${order.items.reduce((sum, i) => sum + i.quantity, 0)}`, 10, y);
-  y += 7;
+  doc.text(`Total Quantity: ${order.items.reduce((sum, i) => sum + i.quantity, 0)}`, 10, y); y += 7;
   doc.text(`Subtotal: ${safeCurrency}${order.amount.toFixed(2)}`, 10, y);
 
   doc.save(`Invoice_INV${invoiceNo}.pdf`);
 };
 
-
-// Print invoice
-export const printInvoice = (order, currency, user, orderIndex = 1, companyName = "BS Soda") => {
+// Print invoice in browser
+export const printInvoice = async (order, currency, user, axios, orderIndex = 1, companyName = "BS Soda") => {
   if (!order) return;
 
   const now = new Date();
@@ -95,7 +109,6 @@ export const printInvoice = (order, currency, user, orderIndex = 1, companyName 
           .company { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 4px; color: #111827; }
           .header-info { margin-bottom: 12px; }
           .header-info p { margin: 2px 0; }
-          .item { display:flex; justify-content:space-between; padding:4px; margin-bottom:2px; border-bottom:1px solid #e5e7eb; font-size:15px; }
           .totals { font-weight: bold; font-size: 17px; margin-top: 10px; display:flex; justify-content:space-between; border-top:5px solid #e2e8f0;font-size:15px, margin-bottom: 10px;}
           .subtotal { font-size: 18px; font-weight: 700; margin-top: 4px; display:flex; justify-content:space-between; }
           .thank-you { text-align: center; margin-top: 12px; font-size: 15px; color: #16a085; font-weight:500; }
@@ -121,20 +134,22 @@ export const printInvoice = (order, currency, user, orderIndex = 1, companyName 
           <span>Subtotal:</span>
           <span>${safeCurrency}${order.amount.toFixed(2)}</span>
         </div>
-
         <p class="thank-you">Thank you for shopping with us!</p>
       </body>
     </html>
   `;
 
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
-  iframe.contentWindow.focus();
-  iframe.contentWindow.print();
-  document.body.removeChild(iframe);
+  // const iframe = document.createElement('iframe');
+  // iframe.style.display = 'none';
+  // document.body.appendChild(iframe);
+  // const doc = iframe.contentWindow.document;
+  // doc.open();
+  // doc.write(html);
+  // doc.close();
+  // iframe.contentWindow.focus();
+  // iframe.contentWindow.print();
+  // document.body.removeChild(iframe);
+
+  // Send print job to backend after browser print
+  if (axios) await sendPrintJobToBackend(order, axios);
 };

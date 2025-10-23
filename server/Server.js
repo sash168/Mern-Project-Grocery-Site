@@ -1,5 +1,4 @@
 import express from 'express';
-import https from 'https';
 import fs from 'fs';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -17,6 +16,7 @@ import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { specs, swaggerUi } from './configs/swagger.js';
+import printRoutes from './routes/printRoutes.js';
 
 // ...existing code...
 const app = express();
@@ -41,8 +41,9 @@ await connectCloudinary();
 //Allow multiple origin
 const allowedOrigins = [
   'http://localhost:5173', 
-  'http://192.168.0.102:5173',
+  'http://192.168.0.103:5173',
   'http://0.0.0.0:5173',
+  'http://192.168.0.103:4000',
   'https://sasha-grocery-site.vercel.app', 
   'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 
   'https://sasha-grocery-site-q6b0l3peq-sashmita-mahapatros-projects.vercel.app'
@@ -55,12 +56,14 @@ app.use(express.json());
 app.use(cookieParser());
 const corsOptions = {
   origin: (origin, callback) => {
+    console.log("CORS check:", origin); // debug incoming origin
     if (!origin || allowedOrigins.includes(origin)) callback(null, true);
     else callback(new Error("Not allowed by CORS"));
   },
   credentials: true
 };
 app.use(cors(corsOptions));
+// app.use(cors());
 app.use(morgan('combined'));
 
 // Debug logger to inspect incoming origin/host
@@ -77,6 +80,7 @@ app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/address', addressRouter);
 app.use('/api/order', ordreRouter);
+app.use('/api/print', printRoutes);
 
 app.use('/api-docs',swaggerUi.serve,swaggerUi.setup(specs,{
     explorer: true,

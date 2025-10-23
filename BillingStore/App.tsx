@@ -9,7 +9,8 @@ import {
   StyleSheet,
   SafeAreaView
 } from 'react-native';
-import { BLEPrinter, type IBLEPrinter } from 'react-native-thermal-receipt-printer';
+import { BLEPrinter, type IBLEPrinter } from 'react-native-thermal-receipt-printer-image-qr';
+import PrintJobManager from './src/pages/PrintJobManager.js';
 
 const requestBluetoothPermissions = async () => {
   if (Platform.OS === 'android' && Platform.Version >= 31) {
@@ -91,17 +92,23 @@ const App = () => {
     }
 
     try {
-      await BLEPrinter.printText('<C>Receipt</C>\n');
-      await BLEPrinter.printText('<L>Item 1</L>\n');
-      await BLEPrinter.printText('<L>Item 2</L>\n');
-      await BLEPrinter.printText('<L>Total: $20</L>\n');
-      await BLEPrinter.printText('<C>Thank you!</C>\n');
+     
       Alert.alert('Printed', 'Receipt printed successfully');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       Alert.alert('Print Error', message);
     }
   };
+
+  useEffect(() => {
+    // Start periodic polling
+    PrintJobManager.startPolling(5000); // every 5 seconds
+
+    // Stop polling on unmount
+    return () => {
+      PrintJobManager.stopPolling();
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -114,7 +121,7 @@ const App = () => {
       <View style={styles.buttonContainer}>
         <Button title="Connect Bluetooth Printer" onPress={connectPrinter} />
         <View style={{ height: 20 }} />
-        <Button title="Print Receipt" onPress={printReceipt} />
+        {/* <Button title="Print Receipt" onPress={printReceipt} /> */}
       </View>
 
       {/* 🔹 Printer Info */}
@@ -123,6 +130,7 @@ const App = () => {
           ✅ Connected to: {printer.device_name}
         </Text>
       )}
+      
     </SafeAreaView>
   );
 };

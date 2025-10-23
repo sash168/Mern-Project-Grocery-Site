@@ -45,6 +45,21 @@ const Cart = () => {
     setCartArray(tempArray);
   };
 
+  const sendPrintJobToBackend = async (order) => {
+    try {
+      const res = await axios.post("/api/print", { order });
+      if (res.data.success || res.data.message) {
+        toast.success(res.data.message || "Print job sent!");
+      } else {
+        toast.error("Failed to send print job");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error sending print job");
+    }
+  };
+
+
   const getUserAddress = async () => {
     try {
       const { data } = await axios.get('/api/address/get');
@@ -104,38 +119,22 @@ const Cart = () => {
       if (data.success) {
         toast.success(data.message);
 
-        // 🖨️ Print Bill via Browser Print Dialog
-        const printContent = `
-          <html>
-            <body style="font-family: sans-serif;">
-              <h2 style="text-align:center;">Invoice</h2>
-              <p><b>Customer:</b> ${customerName}</p>
-              ${customerNumber ? `<p><b>Phone:</b> ${customerNumber}</p>` : ""}
-              <hr/>
-              ${cartArray.map(item => `
-                <p>${item.name} - ${item.quantity} × ${currency}${item.offerPrice}</p>
-              `).join("")}
-              <hr/>
-              <p><b>Total:</b> ${currency}${(getCardAmount() * 1.02).toFixed(2)}</p>
-              <p><b>Payment Mode:</b> Cash on Delivery</p>
-              <p style="text-align:center; margin-top:20px;">Thank you for shopping!</p>
-            </body>
-          </html>
-        `;
-
-        const printWindow = window.open("", "_blank");
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
-
         // ✅ Clear cart and update state
         const updatedProducts = products.map(product => {
           const orderedItem = cartArray.find(item => item._id === product._id);
           if (orderedItem) return { ...product, quantity: product.quantity - orderedItem.quantity };
           return product;
         });
+
+        // Send print job to backend
+        await sendPrintJobToBackend({
+          customerName,
+          customerNumber,
+          items: cartArray,
+          amount: getCardAmount(),
+          createdAt: new Date()
+        });
+
         setCartItems({});
         setProducts(updatedProducts);
         navigate('/my-orders');
@@ -351,7 +350,7 @@ const Cart = () => {
                   Download PDF
                 </button>
                 <button
-                  onClick={() => printInvoice(selectedOrder, currency, user)}
+                  onClick={() => printInvoice(selectedOrder, currency, user, axios)}
                   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 >
                   Print Bill
