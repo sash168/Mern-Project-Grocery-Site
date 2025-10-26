@@ -53,7 +53,7 @@ const SellerLayout = () => {
 
           <Link to="/">
             <img
-              className="cursor-pointer w-18 md:w-20"
+              className="cursor-pointer h-12 sm:h-14"
               src={assets.logo}
               alt="logo"
             />

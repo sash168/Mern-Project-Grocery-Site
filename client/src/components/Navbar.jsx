@@ -36,14 +36,14 @@ function Navbar() {
             <div className="flex items-center justify-between w-full">
                 {/* Logo */}
                 <NavLink to='/' onClick={() => setOpen(false)}>
-                    <img className="h-10 sm:h-12" src={assets.logo} alt="logo" />
+                    <img className="h-12 sm:h-14" src={assets.logo} alt="logo" />
                 </NavLink>
 
                 {/* Desktop Menu */}
                 <div className="hidden sm:flex items-center gap-6 md:gap-8">
                     <NavLink to='/' className="hover:text-primary transition">Home</NavLink>
                     <NavLink to='/products' className="hover:text-primary transition">All Products</NavLink>
-                    <NavLink to='/contact'>Contact</NavLink>
+                    {/* <NavLink to='/contact'>Contact</NavLink> */}
                 </div>
 
                 {/* Right side: Search (desktop), Cart & User */}
@@ -113,7 +113,6 @@ function Navbar() {
                     <NavLink to='/' onClick={() => setOpen(false)}>Home</NavLink>
                     <NavLink to='/products' onClick={() => setOpen(false)}>All Products</NavLink>
                     {user && <NavLink to='/my-orders' onClick={() => setOpen(false)}>My Order</NavLink>}
-                    <NavLink to='/' onClick={() => setOpen(false)}>Contact</NavLink>
                     {!user ? (
                         <button onClick={() => { setOpen(false); setShowUserLogin(true); }} className="cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-dull-primary transition text-white rounded-full text-sm">
                             Login

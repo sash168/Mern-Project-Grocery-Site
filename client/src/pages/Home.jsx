@@ -12,7 +12,7 @@ function Home() {
           <Categories />
           <BestSeller />
           <BottomBanner />
-          <NewsLetter/>
+          {/* <NewsLetter/> */}
     </div>
   )
 }

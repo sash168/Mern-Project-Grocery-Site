@@ -7,7 +7,7 @@ const Footer = () => {
         {/* Left section: Logo + text */}
         <div className="flex-1 min-w-[240px]">
           <img
-            className="w-28 sm:w-32 md:w-36"
+            className="w-20 sm:w-20 md:w-17"
             src={assets.logo}
             alt="Site logo"
           />

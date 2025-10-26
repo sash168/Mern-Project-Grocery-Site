@@ -179,6 +179,7 @@ const ProductsList = ({ onQuantityChange, searchQuery = '', cartItems = [] }) =>
     { id: 11, name: "Fresh Strawberries", emoji: "🍓", price: "4.99", size: "250g" },
     { id: 12, name: "Eggs", emoji: "🥚", price: "3.49", size: "12 pieces" },
   ];
+  
 
   // Filter products based on search query
   const filteredProducts = products.filter(product =>

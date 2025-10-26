@@ -61,6 +61,10 @@ function ProductList() {
   };
 
   const handleEdit = (product) => {
+    if (!product._id) {
+      toast.error("Product ID missing!");
+      return;
+    }
     // Navigate to Add Product page with product data for editing
     navigate("/seller", { state: { productToEdit: { _id: product._id } } });
   };

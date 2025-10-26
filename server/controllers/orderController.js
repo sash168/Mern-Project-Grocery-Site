@@ -3,16 +3,20 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import stripe from 'stripe';
 import mongoose from 'mongoose';
+import Address from '../models/Address.js'; // ✅ Add this import
 
-// place order as COD
 export const placeOrderCOD = async (req, res) => {
   try {
-    const { items, address, customerName, customerNumber } = req.body;
+    const { items, address } = req.body;
     const { userId } = req;
 
-    if (!address || !mongoose.Types.ObjectId.isValid(address) || items.length === 0 || !customerName.trim()) {
-      return res.json({ success: false, message: "Address and valid customer details are required" });
+    if (!address || !mongoose.Types.ObjectId.isValid(address) || items.length === 0) {
+      return res.json({ success: false, message: "Address and valid details are required" });
     }
+
+    // ✅ Get address details
+    const addressDoc = await Address.findById(address);
+    if (!addressDoc) return res.json({ success: false, message: "Invalid address" });
 
     let amount = 0;
     for (const item of items) {
@@ -31,8 +35,6 @@ export const placeOrderCOD = async (req, res) => {
       amount,
       address,
       paymentType: 'COD',
-      customerName: customerName.trim(),
-      customerNumber: customerNumber ? customerNumber.trim() : "" 
     });
 
     return res.json({ success: true, message: "Order Placed Successfully" });
@@ -42,17 +44,18 @@ export const placeOrderCOD = async (req, res) => {
   }
 };
 
-
-// place order as ONLINE PAYMENT
 export const placeOrderStripe = async (req, res) => {
   try {
-    const { items, address, customerName, customerNumber } = req.body;
+    const { items, address } = req.body;
     const { userId } = req;
     const { origin } = req.headers;
 
-    if (!address || items.length === 0 || !customerName) {
+    if (!address || items.length === 0) {
       return res.json({ success: false, message: "Invalid data" });
     }
+
+    const addressDoc = await Address.findById(address);
+    if (!addressDoc) return res.json({ success: false, message: "Invalid address" });
 
     let productData = [];
     let amount = 0;
@@ -79,9 +82,6 @@ export const placeOrderStripe = async (req, res) => {
       amount,
       address,
       paymentType: 'Online',
-      customerName: customerName.trim(),
-      customerName: customerName.trim(),
-      customerNumber: customerNumber ? customerNumber.trim() : "" 
     });
 
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
@@ -109,6 +109,7 @@ export const placeOrderStripe = async (req, res) => {
     res.json({ success: false, message: "Error placing online order: " + e.message });
   }
 };
+
 
 
 //stripe webhook to verify payment

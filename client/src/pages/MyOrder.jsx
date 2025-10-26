@@ -30,16 +30,25 @@ function MyOrder() {
 
       {showInvoiceModal && selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-             onClick={() => setShowInvoiceModal(false)}>
+            onClick={() => setShowInvoiceModal(false)}>
           <div className="bg-white p-6 rounded shadow-lg w-[90%] max-w-md md:max-w-lg relative max-h-[80vh] overflow-y-auto"
-               onClick={(e) => e.stopPropagation()}>
+              onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setShowInvoiceModal(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-900 font-bold">X</button>
             <h2 className="text-xl font-medium mb-3">Invoice Preview</h2>
 
             <div className="bg-white p-4 rounded border border-gray-300 hover:bg-gray-50 transition">
-              <p className="text-sm">Date: {new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
-              <p className="text-sm font-medium">Customer: {selectedOrder.customerName || user?.name || "Guest"}</p>
-              <p className="text-sm">Contact: {selectedOrder.customerNumber || "N/A"}</p>
+              {/* Invoice Number + Date */}
+              {selectedOrder && (() => {
+                const orderDate = new Date(selectedOrder.createdAt);
+                const invoiceNo = `${String(orderDate.getDate()).padStart(2,'0')}${String(orderDate.getMonth()+1).padStart(2,'0')}1`;
+                return (
+                  <>
+                    <p className="text-sm">Invoice No: INV{invoiceNo}</p>
+                    <p className="text-sm">Date: {orderDate.toLocaleDateString()}</p>
+                  </>
+                )
+              })()}
+
               <hr className="my-2" />
 
               {selectedOrder.items.map((item,index) => (
@@ -65,58 +74,76 @@ function MyOrder() {
               <div className="flex gap-2 mt-3">
                 <button onClick={() => downloadInvoicePDF(selectedOrder, currency, user)}
                         className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Download PDF</button>
-                <button onClick={() => printInvoice(selectedOrder, currency, user)}
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Print Bill</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Orders List */}
-      {myOrders.map((order,index)=>(
-        <div key={index} className='border border-gray-300 rounded-lg mb-10 p-4 py-5 max-w-4xl'>
-          <p className='flex justify-between md:items-center text-gray-500 md:font-medium max-md:flex-col'>
-            <span>OrderId: {order._id}</span>
-            <span>Payment: {order.paymentType}</span>
-            <span>Total Amount: {currency}{order.amount}</span>
-          </p>
-          <div className="text-sm text-gray-700 mt-2 mb-3 font-medium flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <p>Customer Name: {order.customerName || user?.name || "Guest"}</p>
-            <p>Customer Number: {order.customerNumber || "N/A"}</p>
-          </div>
 
-          {order.items.map((item, idx) => (
-            <div key={idx} className={`relative bg-white text-gray-500/70 ${order.items.length !== idx+1 && "border-b"} border-gray-300 flex flex-col sm:flex-row sm:items-center justify-between pt-4 pb-4 sm:gap-8 w-full`}>
-              <div className='flex items-center mb-4 md:mb-0' onClick={() => {
-                    navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
-                    scrollTo(0, 0);
-                  }}>
-                <div className='bg-primary/10 p-4 rounded-lg'>
-                  <img src={item.product?.image?.[0] || assets.box_icon} alt={item.product?.name || "Deleted Product"} className='w-16 h-16 sm:w-20 sm:h-20 object-cover rounded'/>
-                </div>
-                <div className='ml-4'>
-                  <h2 className='text-xl font-medium text-gray-800'>{item.product?.name || "Deleted Product"}</h2>
-                  <p>Category: {item.product?.category || "N/A"}</p>
-                </div>
-              </div>
+  {/* Orders List */}
+{myOrders.map((order, index) => (
+  <div key={index} className='border border-gray-300 rounded-lg mb-10 p-4 py-5 max-w-4xl'>
 
-              <div className='flex flex-col justify-center sm:ml-8 mb-4 sm:mb-0'>
-                <p>Quantity: {item.quantity}</p>
-                <p>Status: {order.status}</p>
-                <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
-              </div>
+    {/* Top section: Order info nicely formatted */}
+    <div className="flex flex-col md:flex-row md:justify-between md:items-center text-gray-500 md:font-medium mb-4 w-full">
+      <div className="flex flex-col md:flex-row w-full">
+        <span className="flex-1 sm:text-left md:text-center">OrderId: {order._id}</span>
+        <span className="flex-1 sm:text-left md:text-right">Date: {new Date(order.createdAt).toLocaleDateString()}</span>
+        <span className="flex-1 sm:text-left md:text-right">Total Amount: {currency}{order.amount}</span>
+      </div>
+    </div>
 
-              <div className='text-primary text-lg font-medium flex items-center mt-2 sm:mt-0'>
-                Amount: {currency}{((item.product?.offerPrice || 0) * item.quantity).toFixed(2)}
-              </div>
-            </div>
-          ))}
 
-          <button onClick={()=>{setSelectedOrder(order); setShowInvoiceModal(true);}}
-                  className="bg-gray-300 px-2 py-1 rounded mt-2 text-gray-600 hover:bg-gray-400 transition">View Invoice</button>
-        </div>
-      ))}
+    {order.items.map((item, idx) => (
+  <div
+    key={idx}
+    className={`relative bg-white text-gray-500/70 ${
+      order.items.length !== idx + 1 && "border-b"
+    } border-gray-300 flex flex-col sm:flex-row sm:items-center justify-between pt-4 pb-4 sm:gap-8 w-full`}
+  >
+    <div
+      className="flex items-center mb-4 md:mb-0 cursor-pointer"
+      onClick={() => {
+        navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
+        scrollTo(0, 0);
+      }}
+    >
+      <div className="bg-primary/10 p-4 rounded-lg">
+        <img
+          src={item.product?.image?.[0] || assets.box_icon}
+          alt={item.product?.name || "Deleted Product"}
+          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded"
+        />
+      </div>
+      <div className="ml-4 flex flex-col">
+        <h2 className="text-xl font-medium text-gray-800">{item.product?.name || "Deleted Product"}</h2>
+        <p>Category: {item.product?.category || "N/A"}</p>
+        <p>Quantity: {item.quantity}</p>
+
+        {/* Amount visible below on small screens */}
+        <p className="text-primary text-lg font-medium mt-1 sm:hidden">
+          Amount: {currency}{((item.product?.offerPrice || 0) * item.quantity).toFixed(2)}
+        </p>
+      </div>
+    </div>
+
+    {/* Amount visible on md+ screens */}
+    <div className="text-primary text-lg font-medium flex items-center mt-2 sm:mt-0 hidden sm:flex">
+      Amount: {currency}{((item.product?.offerPrice || 0) * item.quantity).toFixed(2)}
+    </div>
+  </div>
+))}
+
+
+    <button onClick={() => { setSelectedOrder(order); setShowInvoiceModal(true); }}
+            className="bg-gray-300 px-2 py-1 rounded mt-2 text-gray-600 hover:bg-gray-400 transition">
+      View Invoice
+    </button>
+  </div>
+))}
+
+
     </div>
   );
 }

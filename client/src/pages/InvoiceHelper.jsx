@@ -24,8 +24,9 @@ export const sendPrintJobToBackend = async (order, axios) => {
 export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, companyName = "BS Soda") => {
   const doc = new jsPDF();
   let y = 20;
-  const now = new Date();
-  const invoiceNo = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${orderIndex}`;
+ const orderDate = new Date(order.createdAt);
+  const invoiceNo = `${String(orderDate.getDate()).padStart(2,'0')}${String(orderDate.getMonth()+1).padStart(2,'0')}${orderIndex}`;
+
   const safeCurrency = currency === "₹" ? "Rs." : currency;
 
   // Header
@@ -45,8 +46,6 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
   doc.setFont(undefined, "normal");
   doc.text(`Invoice No: ${invoiceNo}`, 10, y); y += 7;
   doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 10, y); y += 7;
-  doc.text(`Customer: ${order.customerName || user?.name || "Guest"}`, 10, y); y += 7;
-  doc.text(`Contact: ${order.customerNumber || "N/A"}`, 10, y); y += 10;
 
   // Table header
   doc.setFont(undefined, "bold");

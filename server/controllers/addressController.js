@@ -24,3 +24,27 @@ export const getAddress = async (req, res) => {
         res.json({ success: false, message: "Error occured while getting address "+ e.message});
     }
 }
+
+export const deleteAddress = async (req, res) => {
+  const { id } = req.params; // address ID
+
+  try {
+    const address = await Address.findById(id);
+
+    if (!address) {
+      return res.status(404).json({ success: false, message: "Address not found" });
+    }
+
+    // Use req.userId from middleware
+    if (address.userId.toString() !== req.userId.toString()) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    await Address.findByIdAndDelete(id);
+
+    res.json({ success: true, message: "Address deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

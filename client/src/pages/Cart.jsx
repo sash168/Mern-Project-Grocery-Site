@@ -1,10 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAppContext } from "../context/AppContext";
-import { assets } from "../assets/assets";
 import toast from "react-hot-toast";
 import { Trash2 } from "lucide-react";
-import { downloadInvoicePDF, printInvoice } from './InvoiceHelper';
-
 
 const Cart = () => {
   const {
@@ -26,13 +23,8 @@ const Cart = () => {
   const [cartArray, setCartArray] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const [paymentOption, setPaymentOption] = useState("COD");
 
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-
-  const [customerName, setCustomerName] = useState("");
-  const [customerNumber, setCustomerNumber] = useState("");
+  const addressRef = useRef(null); // ref for dropdown
 
   const getCart = () => {
     const tempArray = Object.keys(cartItems)
@@ -45,24 +37,9 @@ const Cart = () => {
     setCartArray(tempArray);
   };
 
-  const sendPrintJobToBackend = async (order) => {
-    try {
-      const res = await axios.post("/api/print", { order });
-      if (res.data.success || res.data.message) {
-        toast.success(res.data.message || "Print job sent!");
-      } else {
-        toast.error("Failed to send print job");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Error sending print job");
-    }
-  };
-
-
   const getUserAddress = async () => {
     try {
-      const { data } = await axios.get('/api/address/get');
+      const { data } = await axios.get("/api/address/get");
       if (data.success) {
         setAddresses(data.addresses);
         if (data.addresses.length > 0) setSelectedAddress(data.addresses[0]);
@@ -72,6 +49,17 @@ const Cart = () => {
     }
   };
 
+  // Close address dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (addressRef.current && !addressRef.current.contains(e.target)) {
+        setShowAddress(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     if (products.length > 0 && cartItems) getCart();
   }, [products, cartItems]);
@@ -80,64 +68,31 @@ const Cart = () => {
     if (user) getUserAddress();
   }, [user]);
 
-  const printBill = (order) => {
-    // Mini mobile printer integration logic here
-    // For now, just opening print preview
-    const printWindow = window.open('', '_blank');
-    let html = `<h2>Invoice</h2>
-                <p>Customer: ${order.customerName || user?.name || "Guest"}</p>
-                <p>Contact: ${order.customerNumber || "N/A"}</p>
-                <hr>`;
-        order.items.forEach(item => {
-      const name = item.name || item.product?.name || "Deleted Product";
-      const price = item.offerPrice || item.product?.offerPrice || 0;
-      html += `<p>${name} × ${item.quantity} = ${currency}${(price * item.quantity).toFixed(2)}</p>`;
-    });
-    html += `<hr><p>Subtotal: ${currency}${order.amount.toFixed(2)}</p>`;
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.print();
-  };
-
   const placeOrder = async () => {
-    if (!customerName.trim()) 
-      return toast.error("Please enter a valid customer name");
-
-    if (!selectedAddress || !selectedAddress._id) 
+    if (!selectedAddress || !selectedAddress._id)
       return toast.error("Please select a valid address");
 
-    console.log("sash user : " + user + " selectedAddress : " + selectedAddress);
     try {
-      const { data } = await axios.post('/api/order/cod', {
+      const { data } = await axios.post("/api/order/cod", {
         userId: user._id,
-        items: cartArray.map(item => ({ product: item._id, quantity: item.quantity })),
-        address: selectedAddress?._id,
-        customerName: customerName.trim(),
-        customerNumber: customerNumber.trim()
+        items: cartArray.map((item) => ({ product: item._id, quantity: item.quantity })),
+        address: selectedAddress._id,
       });
 
       if (data.success) {
         toast.success(data.message);
 
-        // ✅ Clear cart and update state
-        const updatedProducts = products.map(product => {
-          const orderedItem = cartArray.find(item => item._id === product._id);
-          if (orderedItem) return { ...product, quantity: product.quantity - orderedItem.quantity };
+        // Update product stock locally
+        const updatedProducts = products.map((product) => {
+          const orderedItem = cartArray.find((item) => item._id === product._id);
+          if (orderedItem)
+            return { ...product, quantity: product.quantity - orderedItem.quantity };
           return product;
-        });
-
-        // Send print job to backend
-        await sendPrintJobToBackend({
-          customerName,
-          customerNumber,
-          items: cartArray,
-          amount: getCardAmount(),
-          createdAt: new Date()
         });
 
         setCartItems({});
         setProducts(updatedProducts);
-        navigate('/my-orders');
+        navigate("/my-orders");
       } else {
         toast.error(data.message);
       }
@@ -153,30 +108,50 @@ const Cart = () => {
       {/* CART ITEMS */}
       <div className="flex-1 space-y-6">
         <h1 className="text-3xl font-medium mb-6">
-          Shopping Cart <span className="text-primary text-base">{getCardCount()} Items</span>
+          Shopping Cart{" "}
+          <span className="text-primary text-base">{getCardCount()} Items</span>
         </h1>
 
-        {cartArray.map(product => (
-          <div key={product._id} className="flex flex-col sm:flex-row md:grid md:grid-cols-[2fr_1fr_1fr] items-center text-sm md:text-base font-medium gap-4 md:gap-0 p-4 bg-white rounded-lg shadow-sm">
+        {cartArray.map((product) => (
+          <div
+            key={product._id}
+            className="flex flex-col sm:flex-row md:grid md:grid-cols-[2fr_1fr_1fr] items-center text-sm md:text-base font-medium gap-4 md:gap-0 p-4 bg-white rounded-lg shadow-sm"
+          >
             <div className="flex items-center gap-4 w-full md:flex-none cursor-pointer">
-              <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden"
-                   onClick={() => navigate(`/products/${product.category.toLowerCase()}/${product._id}`)}>
-                <img src={product.image[0]} alt={product.name} className="w-full h-full object-cover"/>
+              <div
+                className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden"
+                onClick={() => navigate(`/products/${product.category.toLowerCase()}/${product._id}`)}
+              >
+                <img
+                  src={product.image[0]}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="flex flex-col gap-1">
-                <p className="font-semibold"
-                   onClick={() => navigate(`/products/${product.category.toLowerCase()}/${product._id}`)}>
+                <p
+                  className="font-semibold"
+                  onClick={() => navigate(`/products/${product.category.toLowerCase()}/${product._id}`)}
+                >
                   {product.name}
                 </p>
                 <p className="text-gray-500 text-sm">Size: {product.weight || "N/A"}</p>
                 {product.stock > 0 ? (
                   <div className="flex items-center gap-2">
                     <p className="text-sm">Qty:</p>
-                    <select value={cartItems[product._id]} onChange={e => updateCartItem(product._id, Number(e.target.value))} className="border px-2 py-1 rounded text-sm">
-                      {Array.from({ length: product.stock }, (_, i) => <option key={i} value={i+1}>{i+1}</option>)}
+                    <select
+                      value={cartItems[product._id]}
+                      onChange={(e) => updateCartItem(product._id, Number(e.target.value))}
+                      className="border px-2 py-1 rounded text-sm"
+                    >
+                      {Array.from({ length: product.stock }, (_, i) => (
+                        <option key={i} value={i + 1}>{i + 1}</option>
+                      ))}
                     </select>
                   </div>
-                ) : <p className="text-red-500 text-sm">Out of stock</p>}
+                ) : (
+                  <p className="text-red-500 text-sm">Out of stock</p>
+                )}
               </div>
             </div>
 
@@ -196,174 +171,118 @@ const Cart = () => {
           </div>
         ))}
 
-        <button onClick={() => navigate('/products')} className="flex items-center gap-2 text-primary font-medium mt-4">
+        <button
+          onClick={() => navigate("/products")}
+          className="flex items-center gap-2 text-primary font-medium mt-4"
+        >
           Continue Shopping
         </button>
-
       </div>
 
       {/* ORDER SUMMARY */}
-    <div className="w-full md:w-[360px] bg-gray-50 p-5 rounded-lg flex-shrink-0 self-start">
-      <h2 className="text-xl font-medium mb-4">Order Summary</h2>
+      <div className="w-full md:w-[360px] bg-gray-50 p-5 rounded-lg flex-shrink-0 self-start">
+        <h2 className="text-xl font-medium mb-4">Order Summary</h2>
 
-      <div className="mt-2 flex flex-col gap-1">
-        <label className="text-sm font-medium">Customer Name *</label>
-        <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Enter customer name" className="w-full px-3 py-2 rounded border border-gray-300 text-sm" required/>
-      </div>
+        <p className="text-sm font-medium uppercase mt-4">Delivery Address *</p>
+        <div className="relative mt-2" ref={addressRef}>
+          <p className="text-gray-600 text-sm">
+            {selectedAddress
+              ? [
+                  `${selectedAddress.firstName} ${selectedAddress.lastName}`,
+                  selectedAddress.street,
+                  selectedAddress.city,
+                  selectedAddress.state,
+                  selectedAddress.country,
+                  selectedAddress.phone
+                ].filter(Boolean).join(", ")
+              : "No address selected"}
+          </p>
 
-      <div className="mt-2 flex flex-col gap-1">
-        <label className="text-sm font-medium">Customer Number</label>
-        <input type="text" value={customerNumber} onChange={e => setCustomerNumber(e.target.value)} placeholder="Enter customer number" className="w-full px-3 py-2 rounded border border-gray-300 text-sm"/>
-      </div>
-
-      <p className="text-sm font-medium uppercase mt-4">Delivery Address *</p>
-      <div className="relative mt-2">
-        <p className="text-gray-600 text-sm">
-          {selectedAddress 
-            ? [
-                selectedAddress.street,
-                selectedAddress.city,
-                selectedAddress.state,
-                selectedAddress.country
-              ].filter(Boolean).join(", ")
-            : "No address selected"
-          }
-        </p>
-        <button onClick={() => setShowAddress(!showAddress)} className="text-primary hover:underline text-sm">Change</button>
-        {showAddress && (
-          <div className="absolute z-10 top-8 w-full bg-white rounded p-2 shadow-md">
-            {addresses.map((address, i) => (
-              <p key={i} onClick={() => { setSelectedAddress(address); setShowAddress(false); }} className="cursor-pointer p-1 hover:bg-gray-100 text-sm rounded">
-                {address.street}, {address.city}, {address.state}, {address.country}
-              </p>
-            ))}
-            <p onClick={() => navigate("/add-address")} className="cursor-pointer text-primary text-center mt-1 p-1 hover:bg-primary/10 rounded text-sm">Add address</p>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4 space-y-2 text-gray-600">
-        <p className="flex justify-between"><span>Price</span><span>{currency}{getCardAmount().toFixed(2)}</span></p>
-        <p className="flex justify-between"><span>Shipping Fee</span><span className="text-green-600">Free</span></p>
-        <p className="flex justify-between"><span>Tax (0%)</span><span>{currency}{(getCardAmount()).toFixed(2)}</span></p>
-        <p className="flex justify-between text-lg font-medium mt-2"><span>Total Amount:</span><span>{currency}{(getCardAmount()*1.02).toFixed(2)}</span></p>
-      </div>
-
-      {/* NEW INVOICE BUTTON */}
-      {cartArray.length > 0 && (
-        <button
-          onClick={() => {
-            setSelectedOrder({
-              customerName: customerName || user?.name || "Guest",
-              customerNumber: customerNumber || "N/A",
-              items: cartArray,
-              amount: getCardAmount(),
-              createdAt: new Date() // make sure createdAt exists like MyOrder
-            });
-            setShowInvoiceModal(true);
-          }}
-          className="w-full py-2 mt-4 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition font-medium"
-        >
-          View Invoice
-        </button>
-      )}
-
-      <button
-        onClick={placeOrder}
-        disabled={!selectedAddress}
-        className={`w-full py-3 mt-2 rounded font-medium transition ${
-          selectedAddress
-            ? "bg-primary text-white hover:bg-dull-primary"
-            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-        }`}
-      >
-        Place Order & Print
-      </button>
-
-    </div>
-
-
-      {/* INVOICE MODAL */}
-      {showInvoiceModal && selectedOrder && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setShowInvoiceModal(false)}
-        >
-          <div
-            className="bg-white p-6 rounded shadow-lg w-[90%] max-w-md md:max-w-lg relative max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={() => setShowAddress((prev) => !prev)}
+            className="text-primary hover:underline text-sm"
           >
-            <button
-              onClick={() => setShowInvoiceModal(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-900 font-bold"
-            >
-              X
-            </button>
-            <h2 className="text-xl font-medium mb-3">Invoice Preview</h2>
+            Change
+          </button>
 
-            <div className="bg-white p-4 rounded border border-gray-300 hover:bg-gray-50 transition">
-              <p className="text-sm">
-                Date: {new Date(selectedOrder.createdAt || Date.now()).toLocaleDateString()}
-              </p>
-              <p className="text-sm font-medium">
-                Customer: {selectedOrder.customerName || user?.name || "Guest"}
-              </p>
-              <p className="text-sm">Contact: {selectedOrder.customerNumber || "N/A"}</p>
-              <hr className="my-2" />
-
-              {selectedOrder.items.map((item, index) => (
+          {showAddress && (
+            <div className="absolute z-10 top-8 w-full bg-white rounded p-2 shadow-md">
+              {addresses.map((address) => (
                 <div
-                  key={index}
-                  className="flex justify-between text-sm mb-1"
+                  key={address._id}
+                  className="flex justify-between items-center p-1 hover:bg-gray-100 rounded text-sm mt-1"
                 >
-                  <span
+                  <p
+                    className="cursor-pointer flex-1"
                     onClick={() => {
-                      if (item.product?._id && item.product?.category)
-                        navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
-                      scrollTo(0, 0);
+                      setSelectedAddress(address);
+                      setShowAddress(false);
                     }}
                   >
-                    {item.product?.name || item.name || "Deleted Product"} (x{item.quantity})
-                  </span>
-                  <span>
-                    {currency}
-                    {((item.product?.offerPrice || item.offerPrice || 0) * item.quantity).toFixed(2)}
-                  </span>
+                    {`${address.firstName} ${address.lastName}, ${address.street}, ${address.city}, ${address.state}, ${address.country}, ${address.phone}`}
+                  </p>
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        const { data } = await axios.delete(`/api/address/delete/${address._id}`);
+                        if (data.success) {
+                          toast.success("Address deleted");
+                          setAddresses((prev) => prev.filter((a) => a._id !== address._id));
+                          if (selectedAddress?._id === address._id) setSelectedAddress(null);
+                        } else toast.error(data.message);
+                      } catch (err) {
+                        toast.error(err.message);
+                      }
+                    }}
+                    className="hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition"
+                    title="Delete Address"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
 
-              <hr className="my-2" />
-              <p className="flex justify-between font-medium text-base">
-                <span>Total Quantity:</span>
-                <span>{selectedOrder.items.reduce((sum, i) => sum + i.quantity, 0)}</span>
+              <p
+                onClick={() => navigate("/add-address")}
+                className="cursor-pointer text-primary text-center mt-2 p-1 hover:bg-primary/10 rounded text-sm"
+              >
+                Add address
               </p>
-              <p className="flex justify-between font-bold text-lg mt-2">
-                <span>Subtotal:</span>
-                <span>{currency}{selectedOrder.amount.toFixed(2)}</span>
-              </p>
-
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => downloadInvoicePDF(selectedOrder, currency, user)}
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                >
-                  Download PDF
-                </button>
-                <button
-                  onClick={() => printInvoice(selectedOrder, currency, user, axios)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Print Bill
-                </button>
-              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
 
+        <div className="mt-4 space-y-2 text-gray-600">
+          <p className="flex justify-between">
+            <span>Price</span>
+            <span>{currency}{getCardAmount().toFixed(2)}</span>
+          </p>
+          <p className="flex justify-between">
+            <span>Shipping Fee</span>
+            <span className="text-green-600">Free</span>
+          </p>
+          <p className="flex justify-between text-lg font-medium mt-2">
+            <span>Total Amount:</span>
+            <span>{currency}{getCardAmount().toFixed(2)}</span>
+          </p>
+        </div>
 
+        <button
+          onClick={placeOrder}
+          disabled={!selectedAddress}
+          className={`w-full py-3 mt-4 rounded font-medium transition ${
+            selectedAddress
+              ? "bg-primary text-white hover:bg-dull-primary"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Place Order
+        </button>
+      </div>
     </div>
   );
 };
 
 export default Cart;
+
