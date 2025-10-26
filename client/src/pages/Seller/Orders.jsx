@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import toast from 'react-hot-toast';
+import { printInvoice } from '../InvoiceHelper'; // adjust path as needed
 
 function Orders() {
-  const { currency, axios, navigate } = useAppContext();
+  const { currency, axios, navigate, user } = useAppContext();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
-  const [filterType, setFilterType] = useState('all'); // 'all', 'today', '7days', 'custom'
+  const [filterType, setFilterType] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -29,7 +30,6 @@ function Orders() {
     fetchOrders();
   }, []);
 
-  // Filter orders whenever filterType or dates change
   useEffect(() => {
     let filtered = [...orders];
     const today = new Date();
@@ -49,7 +49,7 @@ function Orders() {
     } else if (filterType === 'custom' && startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // Include full end day
+      end.setHours(23, 59, 59, 999);
       filtered = filtered.filter(order => {
         const orderDate = new Date(order.createdAt);
         return orderDate >= start && orderDate <= end;
@@ -73,7 +73,7 @@ function Orders() {
           <span className="text-sm md:text-base text-gray-500">{filteredOrders.length} Orders</span>
         </h2>
 
-        {/* --- Filter Buttons --- */}
+        {/* Filter Buttons */}
         <div className="flex flex-wrap items-center gap-3">
           <button
             className={`px-3 py-1 rounded ${filterType === 'today' ? 'bg-primary text-white' : 'bg-gray-200 text-black'}`}
@@ -106,7 +106,6 @@ function Orders() {
             Reset
           </button>
         </div>
-        
 
         {filteredOrders.map((order, index) => (
           <div 
@@ -120,13 +119,11 @@ function Orders() {
                 {order.items.map((item, idx) => (
                   <p
                     key={idx}
-                    className={`font-medium text-sm md:text-base truncate ${
-                      !item.product ? 'text-red-500' : ''
-                    }`}
+                    className={`font-medium text-sm md:text-base truncate ${!item.product ? 'text-red-500' : ''}`}
                     onClick={() => {
-                    navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
-                    scrollTo(0, 0);
-                  }}
+                      navigate(`/products/${item.product.category.toLowerCase()}/${item.product._id}`);
+                      scrollTo(0, 0);
+                    }}
                   >
                     {item.product?.name || 'Deleted Product'} x {item.quantity}
                   </p>
@@ -150,6 +147,14 @@ function Orders() {
               <p>Method: {order.paymentType}</p>
               <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
               <p>Payment: {order.isPaid ? "Paid" : "Pending"}</p>
+
+              {/* Print Invoice Button */}
+              <button
+                onClick={() => printInvoice(order, currency, user, axios, index + 1)}
+                className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
+              >
+                Print Invoice
+              </button>
             </div>
           </div>
         ))}

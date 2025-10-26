@@ -1,52 +1,38 @@
-import { assets, footerLinks } from "../assets/assets";
+import { Link } from "react-router-dom";
 
-const Footer = () => {
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="px-6 md:px-16 lg:px-24 xl:px-32 mt-20 bg-primary/10">
-      <div className="flex flex-col md:flex-row justify-between gap-10 py-10 border-b border-gray-400/30 text-gray-600">
-        {/* Left section: Logo + text */}
-        <div className="flex-1 min-w-[240px]">
-          <img
-            className="w-20 sm:w-20 md:w-17"
-            src={assets.logo}
-            alt="Site logo"
-          />
-          <p className="max-w-md mt-4 text-sm sm:text-base leading-relaxed">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Rerum unde
-            quaerat eveniet cumque accusamus atque qui error quo enim fugiat?
-          </p>
+    <footer className="bg-green-50 text-gray-700 py-8 mt-20">
+      <div className="container mx-auto px-6 flex flex-col items-center gap-4">
+        
+        {/* Menu Links */}
+          {/* <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
+            <a href="/" className="hover:text-green-600 transition-colors">Home</a>
+            <span className="text-gray-400">•</span>
+            <Link to="/best-sellers" className="hover:text-green-600 transition-colors">
+              Best Sellers
+            </Link>
+            <span className="text-gray-400">•</span>
+            <Link to="/offers" className="hover:text-green-600 transition-colors">
+              Offers & Deals
+            </Link>
+            <span className="text-gray-400">•</span>
+            <a href="/contact" className="hover:text-green-600 transition-colors">All Products</a>
+          </div> */}
+
+        {/* Contact Details */}
+        <div className="flex flex-col items-center text-gray-600 text-sm mt-2 gap-1">
+          <p>Call: +91 9137127558</p>
+          <p>Address: Bada Danda sahi, Bhimpur, Ganjam, Odissa - 761043, India</p>
         </div>
 
-        {/* Right section: Footer Links */}
-        <div className="flex flex-wrap justify-between gap-8 sm:gap-10 md:gap-12 w-full md:w-[50%]">
-          {footerLinks.map((section, index) => (
-            <div key={index} className="min-w-[120px]">
-              <h3 className="font-semibold text-gray-900 mb-3 sm:mb-5 text-sm sm:text-base">
-                {section.title}
-              </h3>
-              <ul className="space-y-1 text-xs sm:text-sm">
-                {section.links.map((link, i) => (
-                  <li key={i}>
-                    <a
-                      href={link.url}
-                      className="hover:text-primary transition-colors duration-200"
-                    >
-                      {link.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        {/* Copyright */}
+        <p className="text-sm text-gray-600 text-center mt-2 w-full">
+          © {currentYear} Sash.dev. All Rights Reserved.
+        </p>
       </div>
-
-      {/* Bottom Text */}
-      <p className="py-4 text-center text-xs sm:text-sm md:text-base text-gray-500/80">
-        © {new Date().getFullYear()} Sash.dev — All Rights Reserved.
-      </p>
     </footer>
   );
-};
-
-export default Footer;
+}

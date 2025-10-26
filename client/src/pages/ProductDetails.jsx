@@ -5,7 +5,7 @@ import { assets } from "../assets/assets";
 import ProductCard from "../components/ProductCard";
 
 const ProductDetails = () => {
-  const { products, navigate, currency, addToCart } = useAppContext();
+  const { products, navigate, currency, addToCart, removeFromCart, cartItems } = useAppContext();
   const { id } = useParams();
 
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -13,7 +13,6 @@ const ProductDetails = () => {
 
   const product = products.find((item) => item._id == id);
 
-  // Set related products
   useEffect(() => {
     if (products.length > 0 && product) {
       const related = products.filter(
@@ -23,7 +22,6 @@ const ProductDetails = () => {
     }
   }, [products, product]);
 
-  // Set initial thumbnail
   useEffect(() => {
     setThumbnail(product?.image[0] || null);
   }, [product]);
@@ -31,6 +29,7 @@ const ProductDetails = () => {
   if (!product) return null;
 
   const isOutOfStock = !product.inStock || product.quantity <= 0;
+  const inCart = !!cartItems[product._id];
 
   return (
     <div className="mt-16 px-4 md:px-16">
@@ -46,15 +45,13 @@ const ProductDetails = () => {
       <div className="flex flex-col md:flex-row gap-10 mt-6">
         {/* Images */}
         <div className="w-full md:w-1/2 flex flex-col items-center relative">
-          {/* Big Image */}
           <div className="w-full border border-gray-300 rounded overflow-hidden relative group h-[400px] md:h-[580px] flex items-center justify-center bg-gray-50">
             <img
-                src={thumbnail}
-                alt="Selected product"
-                className="w-full h-full object-cover object-center rounded transition-transform duration-300 group-hover:scale-105"
+              src={thumbnail}
+              alt="Selected product"
+              className="w-full h-full object-cover object-center rounded transition-transform duration-300 group-hover:scale-105"
             />
 
-            {/* Out of Stock Overlay */}
             {isOutOfStock && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <p className="text-white text-lg font-semibold bg-black/70 px-4 py-2 rounded">
@@ -64,7 +61,6 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* Thumbnails */}
           <div className="flex gap-3 mt-4 overflow-x-auto scrollbar-hide">
             {product.image.map((img, index) => (
               <div
@@ -74,11 +70,7 @@ const ProductDetails = () => {
                   thumbnail === img ? "border-primary" : "border-gray-300"
                 }`}
               >
-                <img
-                  src={img}
-                  alt={`Thumbnail ${index + 1}`}
-                  className="w-16 h-16 object-cover rounded"
-                />
+                <img src={img} alt={`Thumbnail ${index + 1}`} className="w-16 h-16 object-cover rounded" />
               </div>
             ))}
           </div>
@@ -122,7 +114,6 @@ const ProductDetails = () => {
             </ul>
           </div>
 
-          {/* Stock Info */}
           {!isOutOfStock && (
             <p className="text-sm text-gray-500">{product.quantity} left in stock</p>
           )}
@@ -131,36 +122,64 @@ const ProductDetails = () => {
           )}
 
           {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
+          {/* Add / Counter UI */}
+          {isOutOfStock ? (
+            <button
+              disabled
+              className="w-full py-3 rounded font-medium bg-gray-200 text-gray-400 cursor-not-allowed"
+            >
+              Out of Stock
+            </button>
+          ) : !inCart ? (
             <button
               onClick={() => addToCart(product._id)}
-              disabled={isOutOfStock}
-              className={`w-full py-3 rounded font-medium transition ${
-                isOutOfStock
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "text-gray-800 bg-gray-100 hover:bg-gray-200"
-              }`}
+              className="w-full py-3 rounded font-medium text-gray-800 bg-gray-100 hover:bg-gray-200 transition"
             >
-              {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+              Add to Cart
             </button>
+          ) : (
+            <div className="flex items-center justify-center gap-6 w-full py-3 bg-primary/10 rounded select-none">
+              <button
+                onClick={() => removeFromCart(product._id)}
+                className="text-xl px-4 py-1 bg-white rounded border border-primary hover:bg-primary/10 transition"
+              >
+                -
+              </button>
 
-            <button
-              onClick={() => {
-                if (!isOutOfStock) {
-                  addToCart(product._id);
-                  navigate("/cart");
-                }
-              }}
-              disabled={isOutOfStock}
-              className={`w-full py-3 rounded font-medium transition ${
-                isOutOfStock
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-primary text-white hover:bg-dull-primary"
-              }`}
-            >
-              Buy Now
-            </button>
-          </div>
+              <span className="text-lg font-medium min-w-[24px] text-center">
+                {cartItems[product._id]}
+              </span>
+
+              <button
+                onClick={() => addToCart(product._id)}
+                className="text-xl px-4 py-1 bg-white rounded border border-primary hover:bg-primary/10 transition"
+              >
+                +
+              </button>
+            </div>
+
+          )}
+
+          {/* Buy Now button */}
+          <button
+            onClick={() => {
+              if (!isOutOfStock) {
+                addToCart(product._id);
+                navigate("/cart");
+              }
+            }}
+            disabled={isOutOfStock}
+            className={`w-full py-3 rounded font-medium transition ${
+              isOutOfStock
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-primary text-white hover:bg-dull-primary"
+            }`}
+          >
+            Buy Now
+          </button>
+        </div>
+
         </div>
       </div>
 
@@ -174,10 +193,7 @@ const ProductDetails = () => {
         <div className="w-full mt-6">
           <div className="flex gap-4 overflow-x-auto scrollbar-hide px-2 sm:grid sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 md:gap-6">
             {relatedProducts.map((product, index) => (
-              <div
-                key={index}
-                className="min-w-[150px] sm:min-w-0 flex-shrink-0 sm:flex-shrink md:flex-shrink-0"
-              >
+              <div key={index} className="min-w-[150px] sm:min-w-0 flex-shrink-0">
                 <ProductCard product={product} />
               </div>
             ))}

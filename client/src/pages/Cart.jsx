@@ -137,21 +137,38 @@ const Cart = () => {
                 </p>
                 <p className="text-gray-500 text-sm">Size: {product.weight || "N/A"}</p>
                 {product.stock > 0 ? (
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm">Qty:</p>
-                    <select
-                      value={cartItems[product._id]}
-                      onChange={(e) => updateCartItem(product._id, Number(e.target.value))}
-                      className="border px-2 py-1 rounded text-sm"
-                    >
-                      {Array.from({ length: product.stock }, (_, i) => (
-                        <option key={i} value={i + 1}>{i + 1}</option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <p className="text-red-500 text-sm">Out of stock</p>
-                )}
+  <div className="flex items-center gap-3">
+  <p className="text-sm">Qty:</p>
+  <div className="flex items-center gap-2">
+    <button
+      onClick={() =>
+        updateCartItem(product._id, Math.max(1, cartItems[product._id] - 1))
+      }
+      className="text-lg font-semibold px-2"
+    >
+      –
+    </button>
+
+    <span className="text-sm">{cartItems[product._id]}</span>
+
+    <button
+      onClick={() =>
+        updateCartItem(
+          product._id,
+          Math.min(product.stock, cartItems[product._id] + 1)
+        )
+      }
+      className="text-lg font-semibold px-2"
+    >
+      +
+    </button>
+  </div>
+</div>
+
+) : (
+  <p className="text-red-500 text-sm">Out of stock</p>
+)}
+
               </div>
             </div>
 

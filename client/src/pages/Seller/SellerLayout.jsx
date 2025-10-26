@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { Menu, X } from "lucide-react";
 
 const SellerLayout = () => {
-  const { axios, navigate } = useAppContext();
+  const { axios, navigate, setIsSeller } = useAppContext();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sidebarLinks = [
@@ -17,9 +17,10 @@ const SellerLayout = () => {
 
   const logout = async () => {
     try {
-      const { data } = await axios.get("/api/seller/logout");
+      const { data } = await axios.get("/api/seller/logout", { withCredentials: true });
       if (data.success) {
         toast.success(data.message);
+        setIsSeller(false); // <-- update frontend state
         navigate("/");
       } else {
         toast.error(data.message);

@@ -45,8 +45,8 @@ export const sellerlogout = async (req, res) => {
     try {
         res.clearCookie('sellerToken', {
                 httpOnly: true, // secure: can't be accessed by JS
-                secure: true, // must be true for HTTPS
-                sameSite: 'none',
+                secure: false,   // match login
+                sameSite: 'lax', // match login
             })
         return res.json({
             success: true, message:"Seller Logged out"

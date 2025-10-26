@@ -162,16 +162,16 @@ export const footerLinks = [
       { text: "FAQs", url: "#" },
     ],
   },
-  {
-    title: "Need help?",
-    links: [
-      { text: "Delivery Information", url: "#" },
-      { text: "Return & Refund Policy", url: "#" },
-      { text: "Payment Methods", url: "#" },
-      { text: "Track your Order", url: "#" },
-      { text: "Contact Us", url: "#" },
-    ],
-  },
+  // {
+  //   title: "Need help?",
+  //   links: [
+  //     { text: "Delivery Information", url: "#" },
+  //     { text: "Return & Refund Policy", url: "#" },
+  //     { text: "Payment Methods", url: "#" },
+  //     { text: "Track your Order", url: "#" },
+  //     { text: "Contact Us", url: "#" },
+  //   ],
+  // },
   {
     title: "Follow Us",
     links: [

@@ -104,17 +104,15 @@ const AppContextProvider = ({ children }) => {
     const cartData = structuredClone(cartItems);
     cartData[itemId] = quantity;
     setCartItems(cartData);
-    toast.success("Updated Successfully");
   };
 
   const removeFromCart = (itemId) => {
     const cartData = structuredClone(cartItems);
     if (cartData[itemId]) {
-      cartData[itemId] -= 1;
+      cartData[itemId] = 0;
       if (cartData[itemId] === 0) delete cartData[itemId];
     }
     setCartItems(cartData);
-    toast.success("Removed item");
   };
 
   const getCardCount = () =>

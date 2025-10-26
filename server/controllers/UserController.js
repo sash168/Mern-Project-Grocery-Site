@@ -65,6 +65,7 @@ export const login = async(req, res) => {
             sameSite: "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000, //cookie expiration time
         })
+        console.log("Set Cookie (User):", token);
 
         return res.json({ success: true, user: {email: user.email, name: user.name}})
         
@@ -100,11 +101,13 @@ export const isAuth = async(req, res) => {
 
 export const logout = async (req, res) => {
     try {
+        console.log("Incoming Cookies:", req.cookies);
         res.clearCookie('token', {
             httpOnly: true, // secure: can't be accessed by JS
-            secure: true, // must be true for HTTPS
-            sameSite: 'none',
+            secure: false,   // match login
+            sameSite: 'lax', // match login
         })
+        console.log("Incoming Cookies:", req.cookies);
         return res.json({
             success: true, message:"Logged out"
         })

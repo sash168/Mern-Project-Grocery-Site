@@ -65,8 +65,16 @@ function ProductList() {
       toast.error("Product ID missing!");
       return;
     }
-    // Navigate to Add Product page with product data for editing
     navigate("/seller", { state: { productToEdit: { _id: product._id } } });
+  };
+
+  // ✅ Navigate using category + id
+  const handleProductClick = (product) => {
+    if (!product._id || !product.category) {
+      toast.error("Product category or ID missing!");
+      return;
+    }
+    navigate(`/products/${product.category}/${product._id}`);
   };
 
   return (
@@ -93,13 +101,17 @@ function ProductList() {
                   key={product._id}
                   className="border-t border-gray-200 hover:bg-gray-50 transition-all"
                 >
-                  <td className="px-3 sm:px-4 py-2 flex items-center gap-2 sm:gap-3">
-                   <div className="w-20 h-20 flex items-center justify-center border border-gray-300 rounded">    
-                    <img                 
-                      src={product.image[0]}
-                      alt="Product"
-                      className="max-w-14 max-h-full object-cover rounded"
-                    />
+                  {/* ✅ Image + name clickable to product details */}
+                  <td
+                    onClick={() => handleProductClick(product)}
+                    className="px-3 sm:px-4 py-2 flex items-center gap-2 sm:gap-3 cursor-pointer hover:text-blue-600"
+                  >
+                    <div className="w-20 h-20 flex items-center justify-center border border-gray-300 rounded overflow-hidden">
+                      <img
+                        src={product.image[0]}
+                        alt="Product"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <span className="truncate max-w-[120px] sm:max-w-[200px]">{product.name}</span>
                   </td>

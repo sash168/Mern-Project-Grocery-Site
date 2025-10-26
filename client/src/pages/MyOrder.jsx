@@ -40,7 +40,12 @@ function MyOrder() {
               {/* Invoice Number + Date */}
               {selectedOrder && (() => {
                 const orderDate = new Date(selectedOrder.createdAt);
-                const invoiceNo = `${String(orderDate.getDate()).padStart(2,'0')}${String(orderDate.getMonth()+1).padStart(2,'0')}1`;
+                const invoiceNo = (() => {
+                  const datePart = `${String(orderDate.getDate()).padStart(2, '0')}${String(orderDate.getMonth() + 1).padStart(2, '0')}`;
+                  const uniquePart = selectedOrder._id.slice(-4).toUpperCase(); // last 4 chars of MongoDB ID for uniqueness
+                  return `${datePart}${uniquePart}`;
+                })();
+
                 return (
                   <>
                     <p className="text-sm">Invoice No: INV{invoiceNo}</p>
