@@ -24,7 +24,7 @@ const options = {
                 description: 'Local Development Server',
             },
             {
-                url: 'http://192.168.0.103:4000',
+                url: 'http://192.168.0.104:4000',
                 description: 'Network Server',
             },
         ],
