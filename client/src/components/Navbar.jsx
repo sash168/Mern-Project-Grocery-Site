@@ -90,35 +90,59 @@ function Navbar() {
             />
 
             {profileOpen && (
-              <ul className="absolute top-10 right-0 bg-white shadow border border-gray-200 py-2.5 w-40 rounded-md text-sm z-50">
-                {/* Only show these links on small screens */}
-                <li className="lg:hidden p-2 hover:bg-primary/10 cursor-pointer" onClick={() => { navigate('/'); setProfileOpen(false); }}>
-                  Home
-                </li>
-                <li className="lg:hidden p-2 hover:bg-primary/10 cursor-pointer" onClick={() => { navigate('/products'); setProfileOpen(false); }}>
-                  All Products
-                </li>
+            <ul className="absolute top-10 right-0 bg-white shadow border border-gray-200 py-2.5 w-40 rounded-md text-sm z-50">
+              {/* Show only when user is logged in */}
+              {user ? (
+                <>
+                  {/* Home + All Products (visible only when logged in) */}
+                  <li
+                    className="lg:hidden p-2 hover:bg-primary/10 cursor-pointer"
+                    onClick={() => { navigate('/'); setProfileOpen(false); }}
+                  >
+                    Home
+                  </li>
+                  <li
+                    className="lg:hidden p-2 hover:bg-primary/10 cursor-pointer"
+                    onClick={() => { navigate('/products'); setProfileOpen(false); }}
+                  >
+                    All Products
+                  </li>
 
-                {user ? (
-                  <>
-                    <li onClick={() => { navigate('/my-orders'); setProfileOpen(false); }} className="p-2 hover:bg-primary/10 cursor-pointer">
-                      My Order
-                    </li>
-                    <li onClick={() => { logout(); setProfileOpen(false); }} className="p-2 hover:bg-primary/10 cursor-pointer">
-                      Logout
-                    </li>
-                  </>
-                ) : (
-                  <li onClick={() => { setShowUserLogin(true); setProfileOpen(false); }} className="p-2 hover:bg-primary/10 cursor-pointer">
+                  <li
+                    onClick={() => { navigate('/my-orders'); setProfileOpen(false); }}
+                    className="p-2 hover:bg-primary/10 cursor-pointer"
+                  >
+                    My Order
+                  </li>
+                  <li
+                    onClick={() => { logout(); setProfileOpen(false); }}
+                    className="p-2 hover:bg-primary/10 cursor-pointer"
+                  >
+                    Logout
+                  </li>
+                </>
+              ) : (
+                <>
+                  {/* For non-logged users */}
+                  <li
+                    onClick={() => { setShowUserLogin(true); setProfileOpen(false); }}
+                    className="p-2 hover:bg-primary/10 cursor-pointer"
+                  >
                     Login
                   </li>
-                )}
-                {/* Always visible */}
-                <li onClick={() => { navigate('/seller'); setProfileOpen(false); }} className="p-2 hover:bg-primary/10 cursor-pointer">
-                  Seller Login
-                </li>
-              </ul>
-            )}
+                </>
+              )}
+
+              {/* Always visible */}
+              <li
+                onClick={() => { navigate('/seller'); setProfileOpen(false); }}
+                className="p-2 hover:bg-primary/10 cursor-pointer"
+              >
+                Seller Login
+              </li>
+            </ul>
+          )}
+
           </div>
         </div>
       </div>

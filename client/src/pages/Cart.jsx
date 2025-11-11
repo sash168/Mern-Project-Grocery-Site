@@ -68,14 +68,24 @@ const Cart = () => {
     if (user) getUserAddress();
   }, [user]);
 
-  const placeOrder = async () => {
+ const placeOrder = async () => {
+    // 🧩 check if user is logged in
+    if (!user) {
+      toast.error("Please login to place an order");
+      navigate("/"); // optional — redirect to home or login page
+      return;
+    }
+
     if (!selectedAddress || !selectedAddress._id)
       return toast.error("Please select a valid address");
 
     try {
       const { data } = await axios.post("/api/order/cod", {
         userId: user._id,
-        items: cartArray.map((item) => ({ product: item._id, quantity: item.quantity })),
+        items: cartArray.map((item) => ({
+          product: item._id,
+          quantity: item.quantity,
+        })),
         address: selectedAddress._id,
       });
 
@@ -100,6 +110,7 @@ const Cart = () => {
       toast.error(error.message);
     }
   };
+
 
   if (!products.length || !cartItems) return null;
 
@@ -287,15 +298,15 @@ const Cart = () => {
 
         <button
           onClick={placeOrder}
-          disabled={!selectedAddress}
           className={`w-full py-3 mt-4 rounded font-medium transition ${
-            selectedAddress
-              ? "bg-primary text-white hover:bg-dull-primary"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            !user || !selectedAddress
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-primary text-white hover:bg-dull-primary"
           }`}
         >
           Place Order
         </button>
+
       </div>
     </div>
   );
