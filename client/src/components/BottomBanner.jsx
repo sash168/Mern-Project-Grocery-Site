@@ -1,41 +1,32 @@
-import React from 'react'
-import { assets, features } from '../assets/assets'
+import React from 'react';
+import { features } from '../assets/assets';
 
 function BottomBanner() {
   return (
-    <div className="relative mt-16 sm:mt-20 md:mt-24">
-      {/* ✅ Responsive banner images */}
-      <img
-        src={assets.bottom_banner_image}
-        alt="banner"
-        className="w-full hidden md:block object-cover"
-      />
-      <img
-        src={assets.bottom_banner_image_sm}
-        alt="banner"
-        className="w-full md:hidden object-cover"
-      />
+    <div className="mt-12 sm:mt-16 lg:mt-20 px-4 sm:px-6 lg:px-8 w-full">
+      <div className="max-w-6xl mx-auto px-4 text-center">
+        {/* Heading */}
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-primary mb-10">
+          Why Are We Best?
+        </h1>
 
-      {/* ✅ Overlay content positioning */}
-      <div className="absolute inset-0 flex flex-col items-center md:items-end md:justify-center pt-12 sm:pt-16 md:pt-0 md:pr-24 px-4 text-center md:text-right">
-        <div className="max-w-md md:max-w-lg">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-primary mb-6">
-            Why Are We Best?
-          </h1>
-
-          {/* ✅ Responsive feature list */}
+        {/* Feature Row */}
+        <div className="flex flex-col sm:flex-row justify-center items-stretch gap-8 sm:gap-10 flex-wrap">
           {features.map((feature, ind) => (
-            <div className="flex items-center gap-3 sm:gap-4 mt-3" key={ind}>
+            <div
+              key={ind}
+              className="flex flex-col justify-between items-center text-center border border-gray-200 rounded-2xl px-6 py-8 sm:px-8 sm:py-10 w-[90%] sm:w-[45%] md:w-[22%] min-h-[250px] transition-transform hover:-translate-y-1 hover:shadow-lg bg-white"
+            >
               <img
                 src={feature.icon}
                 alt={feature.title}
-                className="w-8 sm:w-9 md:w-10"
+                className="w-12 sm:w-14 mb-4"
               />
-              <div className="text-left md:text-right">
-                <h3 className="text-base sm:text-lg md:text-xl font-semibold">
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-gray-500/70 text-xs sm:text-sm">
+                <p className="text-gray-500 text-sm sm:text-base">
                   {feature.description}
                 </p>
               </div>
@@ -44,7 +35,7 @@ function BottomBanner() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default BottomBanner
+export default BottomBanner;

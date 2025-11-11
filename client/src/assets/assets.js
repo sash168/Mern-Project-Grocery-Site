@@ -20,9 +20,9 @@ import box_icon from "./box_icon.svg";
 import trust_icon from "./trust_icon.svg";
 import black_arrow_icon from "./black_arrow_icon.svg";
 import white_arrow_icon from "./white_arrow_icon.svg";
-import main_banner_bg from "./main_banner_bg.png";
-import main_banner_bg_sm from "./main_banner_bg_sm.png";
-import bottom_banner_image from "./bottom_banner_image.png";
+import main_banner_bg from "./test_banner3.jpg";
+import main_banner_bg_sm from "./test_banner3.jpg";
+import bottom_banner_image from "./test_bt_banner.png";
 import bottom_banner_image_sm from "./bottom_banner_image_sm.png";
 import add_address_iamge from "./add_address_image.svg";
 import organic_vegitable_image from "./organic_vegitable_image.png";
@@ -69,6 +69,7 @@ import vanilla_muffins_image from "./vanilla_muffins_image.png";
 import quinoa_image from "./quinoa_image.png";
 import brown_rice_image from "./brown_rice_image.png";
 import barley_image from "./barley_image.png";
+import masala_image from "./masala_cat.png";
 
 export const assets = {
   logo,
@@ -100,19 +101,9 @@ export const assets = {
   box_icon,
 };
 
+// "#FEE0E0", "#FEF6DA"
+
 export const categories = [
-  {
-    text: "Organic veggies",
-    path: "Vegetables",
-    image: organic_vegitable_image,
-    bgColor: "#FEF6DA",
-  },
-  {
-    text: "Fresh Fruits",
-    path: "Fruits",
-    image: fresh_fruits_image,
-    bgColor: "#FEE0E0",
-  },
   {
     text: "Cold Drinks",
     path: "Drinks",
@@ -120,8 +111,8 @@ export const categories = [
     bgColor: "#F0F5DE",
   },
   {
-    text: "Instant Food",
-    path: "Instant",
+    text: "Snacks & Instant Foods",
+    path: "snacks",
     image: maggi_image,
     bgColor: "#E1F5EC",
   },
@@ -138,17 +129,17 @@ export const categories = [
     bgColor: "#E0F6FE",
   },
   {
-    text: "Grains & Cereals",
-    path: "Grains",
-    image: grain_image,
-    bgColor: "#F1E3F9",
+    text: "Masalas",
+    path: "Masalas",
+    image: masala_image,
+    bgColor: "#FFF3E3",
   },
   {
     text: "Others",
     path: "Others",
     image: grain_image,
-    bgColor: "#F1E3F9",
-  },
+    bgColor: "#FEE0E0",
+  }
 ];
 
 export const footerLinks = [
@@ -187,7 +178,7 @@ export const features = [
   {
     icon: delivery_truck_icon,
     title: "Fastest Delivery",
-    description: "Groceries delivered in under 30 minutes.",
+    description: "Items delivered within 1 day.",
   },
   {
     icon: leaf_icon,
@@ -202,7 +193,7 @@ export const features = [
   {
     icon: trust_icon,
     title: "Trusted by Thousands",
-    description: "Loved by 10,000+ happy customers.",
+    description: "Loved by 30+ happy customers.",
   },
 ];
 

@@ -4,39 +4,58 @@ import { Link } from 'react-router-dom';
 
 function MainBanner() {
   return (
-    <div className='relative w-full'>
-      {/* Background images */}
-      <img src={assets.main_banner_bg} alt='Banner' className='w-full hidden md:block' />
-      <img src={assets.main_banner_bg_sm} alt='Banner' className='w-full md:hidden' />
+    <div className="relative w-full overflow-hidden">
+      {/* Image container */}
+      <div className="relative w-full h-[25vh] md:h-[60vh] sm:h-[55vh] overflow-hidden">
+        {/* Desktop Image */}
+        <img
+          src={assets.main_banner_bg}
+          alt="Banner"
+          className="hidden md:block w-full h-auto object-contain translate-y-[-30%]"
+        />
+        {/* Mobile Image */}
+        <img
+          src={assets.main_banner_bg_sm}
+          alt="Banner"
+          className="w-full h-auto md:hidden object-contain translate-y-[-5%]"
+        />
 
-      {/* Content overlay */}
-      <div className='absolute inset-0 flex flex-col items-start justify-end md:justify-center pb-16 md:pb-0 px-4 md:pl-24 lg:pl-32'>
-        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg leading-snug'>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloribus, nostrum.
-        </h1>
+        {/* Buttons */}
+        <div
+            className="
+              absolute
+              top-[70%] left-1/2 -translate-x-1/2   /* center button on mobile */
+              sm:top-[75%] sm:left-[22%] sm:translate-x-0
+              md:top-[65%] md:left-[22%]
+              flex flex-col sm:flex-row items-center gap-3 sm:gap-4
+            "
+          >
 
-        <div className='flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-6'>
+          {/* Shop Now — visible on all screens */}
           <Link
-            to={'/products'}
-            className='group flex items-center gap-2 px-6 sm:px-8 md:px-9 py-2 md:py-3 bg-primary hover:bg-dull-primary text-white rounded transition cursor-pointer'
+            to="/products"
+            className="
+              group flex items-center justify-center gap-2 
+              px-3 py-1.5 text-sm              /* smaller button for mobile */
+              sm:px-6 sm:py-2 sm:text-base     /* normal size for tablet+ */
+              bg-primary hover:bg-dull-primary 
+              text-white rounded-md 
+              transition duration-200
+            "
           >
             Shop Now
-            <img
-              src={assets.white_arrow_icon}
-              alt='arrow'
-              className='md:hidden w-4 h-4 transition group-hover:translate-x-1'
-            />
           </Link>
 
+          {/* Explore Deals — visible only on desktop */}
           <Link
-            to={'/products'}
-            className='group hidden md:flex items-center gap-2 px-8 py-3 rounded text-black transition cursor-pointer'
+            to="/products"
+            className="hidden md:flex items-center gap-2 px-6 sm:px-8 py-3 bg-white/90 hover:bg-white text-black rounded-md transition duration-200"
           >
             Explore Deals
             <img
               src={assets.black_arrow_icon}
-              alt='arrow'
-              className='w-4 h-4 transition group-hover:translate-x-1'
+              alt="arrow"
+              className="w-4 h-4 transition-transform group-hover:translate-x-1"
             />
           </Link>
         </div>
