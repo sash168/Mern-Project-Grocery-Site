@@ -6,7 +6,7 @@ function Categories() {
   const { navigate } = useAppContext()
 
   return (
-    <div className="mt-12 sm:mt-16 lg:mt-20 px-4 sm:px-6 lg:px-8">
+    <div className="mt-6 sm:mt-16 lg:mt-20 px-4 sm:px-6 lg:px-8">
       <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-800 mb-6">Categories</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-6">

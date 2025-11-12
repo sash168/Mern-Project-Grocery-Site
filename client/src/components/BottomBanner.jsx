@@ -3,10 +3,10 @@ import { features } from '../assets/assets';
 
 function BottomBanner() {
   return (
-    <div className="mt-12 sm:mt-16 lg:mt-20 px-4 sm:px-6 lg:px-8 w-full">
+    <div className="mt-8 sm:mt-16 lg:mt-20 px-4 sm:px-6 lg:px-8 w-full">
       <div className="max-w-6xl mx-auto px-4 text-center">
         {/* Heading */}
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-primary mb-10">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-primary mb-6">
           Why Are We Best?
         </h1>
 
