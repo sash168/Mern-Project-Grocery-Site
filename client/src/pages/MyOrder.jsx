@@ -89,7 +89,6 @@ function MyOrder() {
   {/* Orders List */}
 {myOrders.map((order, index) => (
   <div key={index} className='border border-gray-300 rounded-lg mb-10 p-4 py-5 max-w-4xl'>
-
     {/* Top section: Order info nicely formatted */}
     <div className="flex flex-col md:flex-row md:justify-between md:items-center text-gray-500 md:font-medium mb-4 w-full">
       <div className="flex flex-col md:flex-row w-full">

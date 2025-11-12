@@ -14,6 +14,20 @@ const InputField = ({ type, placeholder, name, handleChange, address }) => (
     />
 )
 
+const DropdownField = ({ name, options, handleChange, value, placeholder }) => (
+    <select
+        className='w-full px-3 py-2 border border-gray-500/30 rounded outline-none text-gray-500 focus:border-primary transition'
+        name={name}
+        value={value}
+        onChange={handleChange}
+    >
+        <option value="">{placeholder || 'Select'}</option>
+        {options.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+    </select>
+)
+
 function AddAddress() {
     const [address, setAddress] = useState({
         firstName: '',
@@ -24,34 +38,93 @@ function AddAddress() {
         state: '',
         country: '',
         zipcode: '',
-        phone:''
+        phone: ''
     })
+
+    // Local only for dropdown control (not saved in DB)
+    const [day, setDay] = useState('');
 
     const { axios, user, navigate } = useAppContext();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setAddress(prev => ({ ...prev, [name]: value }))
+        if (name === 'day') {
+            setDay(value);
+            setAddress(prev => ({ ...prev, street: '' })); // reset street when day changes
+        } else {
+            setAddress(prev => ({ ...prev, [name]: value }));
+        }
     }
 
     const onSubmitHandler = async (e) => {
         e.preventDefault();
+
+        // ✅ Frontend validation before hitting backend
+        if (!address.firstName.trim()) return toast.error("First name is required");
+        if (!address.lastName.trim()) return toast.error("Last name is required");
+        if (!day) return toast.error("Please select a delivery day");
+        if (!address.street) return toast.error("Please select a delivery location");
+        if (!address.zipcode) return toast.error("Zipcode is required");
+        if (!address.phone.trim()) return toast.error("Phone number is required");
+
         try {
-            const { data } = await axios.post('/api/address/add', { address })
+            const { data } = await axios.post('/api/address/add', { address: { ...address, day } });
+
             if (data.success) {
-                toast.success(data.message);
-                navigate('/cart')
+            toast.success(data.message);
+            navigate('/cart');
             } else {
-                toast.error(data.message);            
+            toast.error(data.message || "Failed to add address");
             }
         } catch (error) {
-            toast.error(error.message);
+            console.error("Address save error:", error);
+            const msg = error.response?.data?.message || "Something went wrong. Please check your details.";
+            toast.error(msg);
         }
-    }
+    };
+
 
     useEffect(() => {
         if (!user) navigate('/cart')
     }, [])
+
+    const dayOptions = [
+        { value: 'Sunday', label: '1 - Sunday' },
+        { value: 'Monday', label: '2 - Monday' },
+        { value: 'Tuesday', label: '3 - Tuesday' },
+        { value: 'Wednesday', label: '4 - Wednesday' },
+        { value: 'Thursday', label: '5 - Thursday' },
+    ];
+
+
+    const subDayOptions = {
+        Sunday: [
+            { value: 'Bhimpur', label: 'Bhimpur' },
+            { value: 'Aska', label: 'Aska' },
+            { value: 'Brahmapur', label: 'Brahmapur' },
+            { value: 'Purushotampur', label: 'Purushotampur' },
+        ],
+        Monday: [
+            { value: 'Task 1', label: 'Task 1' },
+            { value: 'Task 2', label: 'Task 2' },
+            { value: 'Task 3', label: 'Task 3' },
+        ],
+        Tuesday: [
+            { value: 'Zone A', label: 'Zone A' },
+            { value: 'Zone B', label: 'Zone B' },
+            { value: 'Zone C', label: 'Zone C' },
+        ],
+        Wednesday: [
+            { value: 'North Area', label: 'North Area' },
+            { value: 'South Area', label: 'South Area' },
+            { value: 'East Area', label: 'East Area' },
+        ],
+        Thursday: [
+            { value: 'Custom Option 1', label: 'Custom Option 1' },
+            { value: 'Custom Option 2', label: 'Custom Option 2' },
+            { value: 'Custom Option 3', label: 'Custom Option 3' },
+        ],
+        };
 
     return (
         <div className='mt-16 pb-16 px-4 md:px-16'>
@@ -67,9 +140,28 @@ function AddAddress() {
                             <InputField handleChange={handleChange} address={address} name='lastName' type='text' placeholder='Last Name *' />
                         </div>
                         <InputField handleChange={handleChange} address={address} name='email' type='email' placeholder='Email Address' />
-                        <InputField handleChange={handleChange} address={address} name='street' type='text' placeholder='Street *' />
+
+                        {/* Replace Street input with dropdowns */}
+                        <DropdownField
+                            name='day'
+                            options={dayOptions}
+                            handleChange={handleChange}
+                            value={day}
+                            placeholder="Select Day"
+                        />
+
+                        {day && (
+                            <DropdownField
+                                name='street'
+                                options={subDayOptions[day] || []}
+                                handleChange={handleChange}
+                                value={address.street}
+                                placeholder="Select Location"
+                            />
+                        )}
+
                         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                            <InputField handleChange={handleChange} address={address} name='city' type='text' placeholder='City *' />
+                            <InputField handleChange={handleChange} address={address} name='city' type='text' placeholder='City' />
                             <InputField handleChange={handleChange} address={address} name='state' type='text' placeholder='State' />  
                         </div>
                         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>

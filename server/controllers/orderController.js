@@ -27,7 +27,7 @@ export const placeOrderCOD = async (req, res) => {
       await product.save();
     }
 
-    amount += Math.floor(amount);
+    amount = Math.floor(amount);
 
     await Order.create({
       userId,
@@ -74,7 +74,7 @@ export const placeOrderStripe = async (req, res) => {
       await product.save();
     }
 
-    amount += Math.floor(amount);
+    amount = Math.floor(amount);
 
     const order = await Order.create({
       userId,

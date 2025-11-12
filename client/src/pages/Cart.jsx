@@ -215,15 +215,26 @@ const Cart = () => {
         <div className="relative mt-2" ref={addressRef}>
           <p className="text-gray-600 text-sm">
             {selectedAddress
-              ? [
-                  `${selectedAddress.firstName} ${selectedAddress.lastName}`,
-                  selectedAddress.street,
-                  selectedAddress.city,
-                  selectedAddress.state,
-                  selectedAddress.country,
-                  selectedAddress.phone
-                ].filter(Boolean).join(", ")
-              : "No address selected"}
+                ? [
+                    `${selectedAddress.firstName || ''} ${selectedAddress.lastName || ''}`.trim(),
+                    selectedAddress.street,
+                    selectedAddress.city,
+                    selectedAddress.state,
+                    selectedAddress.country,
+                    selectedAddress.phone
+                  ]
+                    .filter(item => typeof item === "string" ? item.trim() !== "" : item != null && item !== "")// remove empty/null/undefined/whitespace-only
+                    .join(', ')
+                : 'No address selected'}
+            {(selectedAddress?.day || selectedAddress?.street) && (
+              <p className="text-gray-600 text-sm mt-1 font-semibold">
+                Delivery Day: 
+                {selectedAddress.day ? ` ${selectedAddress.day}` : ''}
+                {selectedAddress.street ? ` — ${selectedAddress.street}` : ''}
+              </p>
+            )}
+
+
           </p>
 
           <button
@@ -247,7 +258,17 @@ const Cart = () => {
                       setShowAddress(false);
                     }}
                   >
-                    {`${address.firstName} ${address.lastName}, ${address.street}, ${address.city}, ${address.state}, ${address.country}, ${address.phone}`}
+                    {[
+                      `${address.firstName || ''} ${address.lastName || ''}`.trim(),
+                      address.street,
+                      address.city,
+                      address.state,
+                      address.country,
+                      address.phone
+                    ]
+                      .filter(item => typeof item === "string" ? item.trim() !== "" : item != null && item !== "")// keep only non-empty values
+                      .join(', ')}
+
                   </p>
                   <button
                     onClick={async (e) => {
@@ -270,6 +291,7 @@ const Cart = () => {
                   </button>
                 </div>
               ))}
+
 
               <p
                 onClick={() => navigate("/add-address")}
