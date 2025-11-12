@@ -165,7 +165,7 @@ function AddAddress() {
                             <InputField handleChange={handleChange} address={address} name='state' type='text' placeholder='State' />  
                         </div>
                         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                            <InputField handleChange={handleChange} address={address} name='zipcode' type='number' placeholder='Zip Code *' />
+                            <InputField handleChange={handleChange} address={address} name='zipcode' type='number' placeholder='Pin Code *' />
                             <InputField handleChange={handleChange} address={address} name='country' type='text' placeholder='Country' />  
                         </div>
                         <InputField handleChange={handleChange} address={address} name='phone' type='text' placeholder='Phone Number' />

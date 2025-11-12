@@ -102,12 +102,24 @@ const PrintJobManager = {
       }
       await BluetoothEscposPrinter.printText('________________________________\n', {});
 
+      const totalAmount = Number(order.amount || 0);
+      const paidAmount = Number(order.paidAmount || 0);
+      const dueAmount = Number(order.dueAmount || (totalAmount - paidAmount));
+
+      const paymentStatus =
+        paidAmount >= totalAmount
+          ? 'Fully Paid'
+          : paidAmount > 0
+          ? `Due ₹${dueAmount.toFixed(2)}`
+          : 'Payment Pending';
+
       // 6️⃣ Totals
       const totalQty = order.items.reduce((acc, i) => acc + (i.quantity || 0), 0);
       await BluetoothEscposPrinter.printText(
         `Total Qty: ${totalQty}\nSubtotal: Rs${(order.amount ?? 0).toFixed(2)}\n`,
         { bold: true }
       );
+      await BluetoothEscposPrinter.printText(`Payment: ${paymentStatus}\n`, { bold: true });
       await BluetoothEscposPrinter.printText('********************************\n', {});
 
       // 7️⃣ Print QR

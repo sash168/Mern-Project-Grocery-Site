@@ -92,11 +92,17 @@ function MyOrder() {
     {/* Top section: Order info nicely formatted */}
     <div className="flex flex-col md:flex-row md:justify-between md:items-center text-gray-500 md:font-medium mb-4 w-full">
       <div className="flex flex-col md:flex-row w-full">
-        <span className="flex-1 sm:text-left md:text-center">OrderId: {order._id}</span>
-        <span className="flex-1 sm:text-left md:text-right">Date: {new Date(order.createdAt).toLocaleDateString()}</span>
+        <span className="flex-1 sm:text-left md:text-left">Order Date: {new Date(order.createdAt).toLocaleDateString()}</span>
+        {order.address && (
+        <span className="flex-1 sm:text-left md:text-right">
+          Delivery Day: <span className="font-medium">{order.address.day}</span>
+          {order.address.street ? ` — ${order.address.street}` : ''}
+        </span>
+        )}
         <span className="flex-1 sm:text-left md:text-right">Total Amount: {currency}{order.amount}</span>
       </div>
     </div>
+
 
 
     {order.items.map((item, idx) => (

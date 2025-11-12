@@ -204,6 +204,47 @@ export const getAllOrders = async (req, res) => {
     }
 }
 
+// ✅ Update payment status or due amount
+export const updatePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentStatus, dueAmount } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) return res.json({ success: false, message: "Order not found" });
+
+    order.paymentStatus = paymentStatus;
+    order.dueAmount = dueAmount || 0;
+    order.paidAmount = order.amount - (dueAmount || 0);
+    order.isPaid = paymentStatus === 'Fully Paid';
+
+
+    await order.save();
+
+    res.json({ success: true, message: "Payment updated successfully" });
+  } catch (e) {
+    res.json({ success: false, message: "Error updating payment: " + e.message });
+  }
+};
+
+// ✅ Update delivery status
+export const updateDelivery = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deliveryStatus } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) return res.json({ success: false, message: "Order not found" });
+
+    order.deliveryStatus = deliveryStatus;
+    await order.save();
+
+    res.json({ success: true, message: "Delivery status updated successfully" });
+  } catch (e) {
+    res.json({ success: false, message: "Error updating delivery: " + e.message });
+  }
+};
+
 
 
 

@@ -5,8 +5,11 @@ import { Link } from 'react-router-dom';
 function MainBanner() {
   return (
     <div className="relative w-full overflow-hidden">
-      {/* Image container */}
-      <div className="relative w-full h-[25vh] md:h-[60vh] sm:h-[55vh] overflow-hidden">
+      {/* ✅ Entire banner is clickable on mobile */}
+      <Link
+        to="/products"
+        className="block relative w-full h-[25vh] md:h-[60vh] sm:h-[55vh] overflow-hidden"
+      >
         {/* Desktop Image */}
         <img
           src={assets.main_banner_bg}
@@ -20,24 +23,22 @@ function MainBanner() {
           className="w-full h-auto md:hidden object-contain translate-y-[-5%]"
         />
 
-        {/* Buttons */}
+        {/* Buttons (hidden on mobile) */}
         <div
-            className="
-              absolute
-              top-[70%] left-1/2 -translate-x-1/2   /* center button on mobile */
-              sm:top-[75%] sm:left-[22%] sm:translate-x-0
-              md:top-[65%] md:left-[22%]
-              flex flex-col sm:flex-row items-center gap-3 sm:gap-4
-            "
-          >
-
-          {/* Shop Now — visible on all screens */}
+          className="
+            absolute
+            top-[70%] left-1/2 -translate-x-1/2
+            sm:top-[75%] sm:left-[22%] sm:translate-x-0
+            md:top-[65%] md:left-[22%]
+            flex flex-col sm:flex-row items-center gap-3 sm:gap-4
+          "
+        >
+          {/* Shop Now — visible on tablet+ */}
           <Link
             to="/products"
             className="
-              group flex items-center justify-center gap-2 
-              px-3 py-1.5 text-sm              /* smaller button for mobile */
-              sm:px-6 sm:py-2 sm:text-base     /* normal size for tablet+ */
+              hidden sm:flex items-center justify-center gap-2 
+              px-6 py-2 text-base
               bg-primary hover:bg-dull-primary 
               text-white rounded-md 
               transition duration-200
@@ -49,7 +50,7 @@ function MainBanner() {
           {/* Explore Deals — visible only on desktop */}
           <Link
             to="/products"
-            className="hidden md:flex items-center gap-2 px-6 sm:px-8 py-3 bg-white/90 hover:bg-white text-black rounded-md transition duration-200"
+            className="hidden md:flex items-center gap-2 px-8 py-3 bg-white/90 hover:bg-white text-black rounded-md transition duration-200"
           >
             Explore Deals
             <img
@@ -59,7 +60,7 @@ function MainBanner() {
             />
           </Link>
         </div>
-      </div>
+      </Link>
     </div>
   );
 }

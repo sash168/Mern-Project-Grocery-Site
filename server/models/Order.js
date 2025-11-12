@@ -13,6 +13,12 @@ const orderSchema = mongoose.Schema({
   status: { type: String, default: 'Order Placed' },
   paymentType: { type: String, required: true },
   isPaid: { type: Boolean, required: true, default: false },
+
+  paymentStatus: { type: String, default: 'Pending' },
+  dueAmount: { type: Number, default: 0 },
+  deliveryStatus: { type: String, default: 'Pending' },
+  paidAmount: { type: Number, default: 0 },
+
 }, { timestamps: true });
 
 const Order = mongoose.models.order || mongoose.model('order', orderSchema);
