@@ -60,11 +60,12 @@ export const login = async(req, res) => {
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         
         res.cookie('token', token, {
-            httpOnly: true, // secure: can't be accessed by JS
-            secure: false,
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000, //cookie expiration time
-        })
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", // true on Vercel
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
         console.log("Set Cookie (User):", token);
 
         return res.json({ success: true, user: {email: user.email, name: user.name}})
@@ -102,11 +103,11 @@ export const isAuth = async(req, res) => {
 export const logout = async (req, res) => {
     try {
         console.log("Incoming Cookies:", req.cookies);
-        res.clearCookie('token', {
-            httpOnly: true, // secure: can't be accessed by JS
-            secure: false,   // match login
-            sameSite: 'lax', // match login
-        })
+        res.clearCookie('sellerToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        });
         console.log("Incoming Cookies:", req.cookies);
         return res.json({
             success: true, message:"Logged out"

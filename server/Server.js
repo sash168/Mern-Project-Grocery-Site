@@ -41,9 +41,7 @@ await connectCloudinary();
 //Allow multiple origin
 const allowedOrigins = [
   'http://localhost:5173', 
-  'http://192.168.0.105:5173',
-  'http://0.0.0.0:5173',
-  'http://192.168.0.104:4000',
+  'http://192.168.0.102:5173',
   'https://sasha-grocery-site.vercel.app', 
   'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 
   'https://sasha-grocery-site-q6b0l3peq-sashmita-mahapatros-projects.vercel.app'

@@ -9,11 +9,11 @@ export const sellerLogin = async (req, res) => {
             const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
             res.cookie('sellerToken', token, {
-                httpOnly: true, // secure: can't be accessed by JS
-                secure: false,
-                sameSite: "lax",
-                maxAge: 7 * 24 * 60 * 60 * 1000, //cookie expiration time
-            })
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production", // ✅ true on Vercel
+                sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // ✅ required for cross-domain cookies
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            });
     
             return res.json({ success: true, message: "Seller Logged in Successfully" });
     
@@ -44,10 +44,10 @@ export const isSellerAuth = async(req, res) => {
 export const sellerlogout = async (req, res) => {
     try {
         res.clearCookie('sellerToken', {
-                httpOnly: true, // secure: can't be accessed by JS
-                secure: false,   // match login
-                sameSite: 'lax', // match login
-            })
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        });
         return res.json({
             success: true, message:"Seller Logged out"
         })
