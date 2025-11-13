@@ -187,7 +187,7 @@ function Orders() {
               />
               <div className="flex flex-col gap-1 truncate">
                 {order.items.map((item, idx) => (
-                  console.log(order.items),
+                  console.log(order),
                   <p
                     key={idx}
                     className={`font-medium text-sm md:text-base truncate ${!item.product ? 'text-red-500' : ''}`}
@@ -297,7 +297,7 @@ function Orders() {
 
               {/* 🖨 Print Invoice */}
               <button
-                onClick={() => printInvoice(order.items, currency, user, axios, index + 1)}
+                onClick={() => printInvoice(order, currency, user, axios, index + 1)}
                 className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
               >
                 Print Invoice
