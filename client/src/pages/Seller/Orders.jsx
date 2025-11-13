@@ -11,6 +11,8 @@ function Orders() {
   const [filterType, setFilterType] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [paidInputs, setPaidInputs] = useState({}); // key: order._id -> string/number
+
 
   const fetchOrders = async () => {
     try {
@@ -66,36 +68,51 @@ function Orders() {
     setFilteredOrders(orders);
   };
 
-  // ✅ Handle Paid Amount entry
   const handlePaidAmount = async (order, paidAmountInput) => {
-    const paidAmount = Number(paidAmountInput);
+    const add = Number(paidAmountInput);
     const total = Number(order.amount);
 
-    if (isNaN(paidAmount) || paidAmount < 0) {
-      toast.error('Please enter a valid paid amount');
-      return;
-    }
-    if (paidAmount > total) {
-      toast.error('Paid amount cannot exceed total amount');
+    // current paid / due from order (use DB values if present)
+    const currentPaid = Number(order.paidAmount || 0);
+    const currentDue = Number(
+      order.dueAmount !== undefined && order.dueAmount !== null
+        ? order.dueAmount
+        : Math.max(0, total - currentPaid)
+    );
+
+    if (isNaN(add) || add <= 0) {
+      toast.error('Please enter a valid paid amount (greater than 0)');
       return;
     }
 
-    const dueAmount = total - paidAmount;
-    const paymentStatus = dueAmount === 0 ? 'Fully Paid' : `Due ₹${dueAmount}`;
+    if (add > currentDue) {
+      toast.error(`You can only pay up to ₹${currentDue}`);
+      return;
+    }
+
+    const newPaidAmount = currentPaid + add;
+    const newDueAmount = Math.max(0, total - newPaidAmount);
+    const paymentStatus = newDueAmount === 0 ? 'Fully Paid' : `Due ₹${newDueAmount}`;
 
     try {
       const { data } = await axios.put(`/api/order/updatePayment/${order._id}`, {
         paymentStatus,
-        dueAmount,
+        dueAmount: newDueAmount
+        // backend will compute paidAmount if needed; sending dueAmount is enough
+        // but you may also send paidAmount: newPaidAmount if your backend expects it
       });
       if (data.success) {
         toast.success('Payment updated successfully!');
+        // clear local input for this order
+        setPaidInputs(p => ({ ...p, [order._id]: '' }));
         fetchOrders();
       }
-    } catch {
+    } catch (err) {
       toast.error('Failed to update payment');
+      console.error(err);
     }
   };
+
 
   // ✅ Handle Delivery Status
   const handleDeliveryStatus = async (orderId, status) => {
@@ -170,6 +187,7 @@ function Orders() {
               />
               <div className="flex flex-col gap-1 truncate">
                 {order.items.map((item, idx) => (
+                  console.log(order.items),
                   <p
                     key={idx}
                     className={`font-medium text-sm md:text-base truncate ${!item.product ? 'text-red-500' : ''}`}
@@ -224,25 +242,40 @@ function Orders() {
                   <input
                     type="number"
                     min="0"
-                    max={order.amount}
+                    // limit max to current remaining due
+                    max={ (order.dueAmount ?? (order.amount - (order.paidAmount || 0))) || order.amount }
                     placeholder="Paid ₹"
                     className="border p-1 rounded w-24"
-                    onChange={e => order.tempPaid = e.target.value}
+                    value={paidInputs[order._id] ?? ''}
+                    onChange={e => setPaidInputs(prev => ({ ...prev, [order._id]: e.target.value }))}
                   />
+
+                  {/* Save (partial / any amount <= remaining due) */}
                   <button
-                    onClick={() => handlePaidAmount(order, order.tempPaid)}
+                    onClick={() => handlePaidAmount(order, paidInputs[order._id])}
                     className="text-xs px-2 py-1 bg-orange-500 text-white rounded hover:bg-orange-600"
                   >
                     Save
                   </button>
+
+                  {/* Paid = pay full remaining due */}
                   <button
-                    onClick={() => handlePaidAmount(order, order.amount)}
+                    onClick={() => {
+                      const remainingDue = Number(order.dueAmount ?? (order.amount - (order.paidAmount || 0)));
+                      // call with remaining due (only if > 0)
+                      if (remainingDue <= 0) {
+                        toast.error('Nothing to pay — already fully paid');
+                        return;
+                      }
+                      handlePaidAmount(order, remainingDue);
+                    }}
                     className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
                   >
                     Paid
                   </button>
                 </div>
               )}
+
 
               {/* 🚚 Delivery */}
               <p>
@@ -264,7 +297,7 @@ function Orders() {
 
               {/* 🖨 Print Invoice */}
               <button
-                onClick={() => printInvoice(order, currency, user, axios, index + 1)}
+                onClick={() => printInvoice(order.items, currency, user, axios, index + 1)}
                 className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
               >
                 Print Invoice

@@ -5,39 +5,40 @@ import { Link } from 'react-router-dom';
 function MainBanner() {
   return (
     <div className="relative w-full overflow-hidden">
-      {/* ✅ Entire banner is clickable on mobile */}
+      {/* ✅ Mobile & tablet view: Entire banner clickable */}
       <Link
         to="/products"
-        className="block relative w-full h-[25vh] md:h-[60vh] sm:h-[55vh] overflow-hidden"
+        className="block sm:hidden relative w-full h-[25vh] overflow-hidden"
       >
-        {/* Desktop Image */}
-        <img
-          src={assets.main_banner_bg}
-          alt="Banner"
-          className="hidden md:block w-full h-auto object-contain translate-y-[-30%]"
-        />
-        {/* Mobile Image */}
         <img
           src={assets.main_banner_bg_sm}
           alt="Banner"
-          className="w-full h-auto md:hidden object-contain translate-y-[-5%]"
+          className="w-full h-auto object-contain translate-y-[-5%]"
+        />
+      </Link>
+
+      {/* ✅ Desktop & larger: Only buttons clickable */}
+      <div className="hidden sm:block relative w-full h-[55vh] md:h-[60vh] overflow-hidden">
+        {/* Banner Image */}
+        <img
+          src={assets.main_banner_bg}
+          alt="Banner"
+          className="w-full h-auto object-contain translate-y-[-30%]"
         />
 
-        {/* Buttons (hidden on mobile) */}
+        {/* Buttons */}
         <div
           className="
             absolute
-            top-[70%] left-1/2 -translate-x-1/2
-            sm:top-[75%] sm:left-[22%] sm:translate-x-0
-            md:top-[65%] md:left-[22%]
-            flex flex-col sm:flex-row items-center gap-3 sm:gap-4
+            top-[75%] left-[22%]
+            md:top-[65%] flex flex-row items-center gap-4
           "
         >
-          {/* Shop Now — visible on tablet+ */}
+          {/* Shop Now */}
           <Link
             to="/products"
             className="
-              hidden sm:flex items-center justify-center gap-2 
+              flex items-center justify-center gap-2 
               px-6 py-2 text-base
               bg-primary hover:bg-dull-primary 
               text-white rounded-md 
@@ -47,10 +48,14 @@ function MainBanner() {
             Shop Now
           </Link>
 
-          {/* Explore Deals — visible only on desktop */}
+          {/* Explore Deals */}
           <Link
             to="/products"
-            className="hidden md:flex items-center gap-2 px-8 py-3 bg-white/90 hover:bg-white text-black rounded-md transition duration-200"
+            className="
+              hidden md:flex items-center gap-2 
+              px-8 py-3 bg-white/90 hover:bg-white 
+              text-black rounded-md transition duration-200
+            "
           >
             Explore Deals
             <img
@@ -60,7 +65,7 @@ function MainBanner() {
             />
           </Link>
         </div>
-      </Link>
+      </div>
     </div>
   );
 }

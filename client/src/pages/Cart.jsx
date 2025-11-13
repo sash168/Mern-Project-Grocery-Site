@@ -3,6 +3,69 @@ import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 import { Trash2 } from "lucide-react";
 
+const CartItem = ({ product, cartItems, updateCartItem, removeFromCart, navigate, currency }) => (
+  <div className="flex flex-col sm:flex-row md:grid md:grid-cols-[2fr_1fr_1fr] items-center gap-4 md:gap-0 p-4 bg-white rounded-lg shadow-sm">
+    <div className="flex items-center gap-4 w-full md:flex-none cursor-pointer">
+      <div
+        className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden"
+        onClick={() => navigate(`/products/${product.category.toLowerCase()}/${product._id}`)}
+      >
+        <img src={product.image[0]} alt={product.name} className="w-full h-full object-cover" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <p
+          className="font-semibold cursor-pointer"
+          onClick={() => navigate(`/products/${product.category.toLowerCase()}/${product._id}`)}
+        >
+          {product.name}
+        </p>
+        <p className="text-gray-500 text-sm">Size: {product.weight || "N/A"}</p>
+
+        {product.stock > 0 ? (
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-sm">Qty:</p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  updateCartItem(product._id, Math.max(1, cartItems[product._id] - 1))
+                }
+                className="text-lg font-semibold px-2"
+              >
+                –
+              </button>
+              <span className="text-sm">{cartItems[product._id]}</span>
+              <button
+                onClick={() =>
+                  updateCartItem(product._id, Math.min(product.stock, cartItems[product._id] + 1))
+                }
+                className="text-lg font-semibold px-2"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-red-500 text-sm mt-1">Out of stock</p>
+        )}
+      </div>
+    </div>
+
+    <p className="text-center md:text-left text-lg font-medium">
+      {currency}{(product.offerPrice * product.quantity).toFixed(2)}
+    </p>
+
+    <div className="flex justify-center md:justify-start">
+      <button
+        onClick={() => removeFromCart(product._id)}
+        className="hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition"
+        title="Remove item"
+      >
+        <Trash2 className="w-5 h-5" />
+      </button>
+    </div>
+  </div>
+);
+
 const Cart = () => {
   const {
     user,
@@ -24,7 +87,7 @@ const Cart = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
 
-  const addressRef = useRef(null); // ref for dropdown
+  const addressRef = useRef(null);
 
   const getCart = () => {
     const tempArray = Object.keys(cartItems)
@@ -49,7 +112,14 @@ const Cart = () => {
     }
   };
 
-  // Close address dropdown when clicking outside
+  useEffect(() => {
+    if (products.length > 0 && cartItems) getCart();
+  }, [products, cartItems]);
+
+  useEffect(() => {
+    if (user) getUserAddress();
+  }, [user]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (addressRef.current && !addressRef.current.contains(e.target)) {
@@ -60,39 +130,25 @@ const Cart = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (products.length > 0 && cartItems) getCart();
-  }, [products, cartItems]);
-
-  useEffect(() => {
-    if (user) getUserAddress();
-  }, [user]);
-
- const placeOrder = async () => {
-    // 🧩 check if user is logged in
+  const placeOrder = async () => {
     if (!user) {
       toast.error("Please login to place an order");
-      navigate("/"); // optional — redirect to home or login page
+      navigate("/");
       return;
     }
 
-    if (!selectedAddress || !selectedAddress._id)
-      return toast.error("Please select a valid address");
+    if (!selectedAddress?._id) return toast.error("Please select a valid address");
 
     try {
       const { data } = await axios.post("/api/order/cod", {
         userId: user._id,
-        items: cartArray.map((item) => ({
-          product: item._id,
-          quantity: item.quantity,
-        })),
+        items: cartArray.map((item) => ({ product: item._id, quantity: item.quantity })),
         address: selectedAddress._id,
       });
 
       if (data.success) {
         toast.success(data.message);
 
-        // Update product stock locally
         const updatedProducts = products.map((product) => {
           const orderedItem = cartArray.find((item) => item._id === product._id);
           if (orderedItem)
@@ -103,14 +159,11 @@ const Cart = () => {
         setCartItems({});
         setProducts(updatedProducts);
         navigate("/my-orders");
-      } else {
-        toast.error(data.message);
-      }
+      } else toast.error(data.message);
     } catch (error) {
       toast.error(error.message);
     }
   };
-
 
   if (!products.length || !cartItems) return null;
 
@@ -119,84 +172,19 @@ const Cart = () => {
       {/* CART ITEMS */}
       <div className="flex-1 space-y-6">
         <h1 className="text-3xl font-medium mb-6">
-          Shopping Cart{" "}
-          <span className="text-primary text-base">{getCardCount()} Items</span>
+          Shopping Cart <span className="text-primary text-base">{getCardCount()} Items</span>
         </h1>
 
         {cartArray.map((product) => (
-          <div
+          <CartItem
             key={product._id}
-            className="flex flex-col sm:flex-row md:grid md:grid-cols-[2fr_1fr_1fr] items-center text-sm md:text-base font-medium gap-4 md:gap-0 p-4 bg-white rounded-lg shadow-sm"
-          >
-            <div className="flex items-center gap-4 w-full md:flex-none cursor-pointer">
-              <div
-                className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden"
-                onClick={() => navigate(`/products/${product.category.toLowerCase()}/${product._id}`)}
-              >
-                <img
-                  src={product.image[0]}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <p
-                  className="font-semibold"
-                  onClick={() => navigate(`/products/${product.category.toLowerCase()}/${product._id}`)}
-                >
-                  {product.name}
-                </p>
-                <p className="text-gray-500 text-sm">Size: {product.weight || "N/A"}</p>
-                {product.stock > 0 ? (
-  <div className="flex items-center gap-3">
-  <p className="text-sm">Qty:</p>
-  <div className="flex items-center gap-2">
-    <button
-      onClick={() =>
-        updateCartItem(product._id, Math.max(1, cartItems[product._id] - 1))
-      }
-      className="text-lg font-semibold px-2"
-    >
-      –
-    </button>
-
-    <span className="text-sm">{cartItems[product._id]}</span>
-
-    <button
-      onClick={() =>
-        updateCartItem(
-          product._id,
-          Math.min(product.stock, cartItems[product._id] + 1)
-        )
-      }
-      className="text-lg font-semibold px-2"
-    >
-      +
-    </button>
-  </div>
-</div>
-
-) : (
-  <p className="text-red-500 text-sm">Out of stock</p>
-)}
-
-              </div>
-            </div>
-
-            <p className="text-center md:text-left text-lg font-medium">
-              {currency}{(product.offerPrice * product.quantity).toFixed(2)}
-            </p>
-
-            <div className="flex justify-center md:justify-start">
-              <button
-                onClick={() => removeFromCart(product._id)}
-                className="hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition"
-                title="Remove item"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+            product={product}
+            cartItems={cartItems}
+            updateCartItem={updateCartItem}
+            removeFromCart={removeFromCart}
+            navigate={navigate}
+            currency={currency}
+          />
         ))}
 
         <button
@@ -215,31 +203,23 @@ const Cart = () => {
         <div className="relative mt-2" ref={addressRef}>
           <p className="text-gray-600 text-sm">
             {selectedAddress
-                ? [
-                    `${selectedAddress.firstName || ''} ${selectedAddress.lastName || ''}`.trim(),
-                    selectedAddress.street,
-                    selectedAddress.city,
-                    selectedAddress.state,
-                    selectedAddress.country,
-                    selectedAddress.phone
-                  ]
-                    .filter(item => typeof item === "string" ? item.trim() !== "" : item != null && item !== "")// remove empty/null/undefined/whitespace-only
-                    .join(', ')
-                : 'No address selected'}
-            {(selectedAddress?.day || selectedAddress?.street) && (
-              <p className="text-gray-600 text-sm mt-1 font-semibold">
-                Delivery Day: 
-                {selectedAddress.day ? ` ${selectedAddress.day}` : ''}
-                {selectedAddress.street ? ` — ${selectedAddress.street}` : ''}
-              </p>
-            )}
-
-
+              ? [
+                  selectedAddress.name || selectedAddress.firstName || '',
+                  selectedAddress.street,
+                  selectedAddress.addressInfo, // added addressInfo
+                  selectedAddress.city,
+                  selectedAddress.state,
+                  selectedAddress.zipcode,
+                  selectedAddress.phone
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              : "No address selected"}
           </p>
 
           <button
             onClick={() => setShowAddress((prev) => !prev)}
-            className="text-primary hover:underline text-sm"
+            className="text-primary hover:underline text-sm mt-1"
           >
             Change
           </button>
@@ -258,18 +238,17 @@ const Cart = () => {
                       setShowAddress(false);
                     }}
                   >
-                    {[
-                      `${address.firstName || ''} ${address.lastName || ''}`.trim(),
+                    {[address.name || address.firstName || '',
                       address.street,
+                      address.addressInfo, // show extra info
                       address.city,
                       address.state,
-                      address.country,
-                      address.phone
-                    ]
-                      .filter(item => typeof item === "string" ? item.trim() !== "" : item != null && item !== "")// keep only non-empty values
-                      .join(', ')}
-
+                      address.zipcode,
+                      address.phone]
+                      .filter(Boolean)
+                      .join(", ")}
                   </p>
+
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -291,7 +270,6 @@ const Cart = () => {
                   </button>
                 </div>
               ))}
-
 
               <p
                 onClick={() => navigate("/add-address")}
@@ -328,11 +306,9 @@ const Cart = () => {
         >
           Place Order
         </button>
-
       </div>
     </div>
   );
 };
 
 export default Cart;
-

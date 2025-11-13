@@ -2,29 +2,39 @@ import axios from 'axios';
 import RNFS from 'react-native-fs';
 import { BluetoothManager, BluetoothEscposPrinter } from '@ccdilan/react-native-bluetooth-escpos-printer';
 import { Platform } from 'react-native';
+import EventEmitter from 'eventemitter3';
 
-const API_BASE = 'http://192.168.0.104:4000/api/print';
+const printerEvents = new EventEmitter();
+const API_BASE = 'https://mern-project-grocery-site.vercel.app/api/print';
 let pollingInterval = null;
 
-// ✅ Paths for local images
+// ✅ Local asset paths
 const LOGO_PATH = Platform.OS === 'android' ? 'Logo.jpg' : `${RNFS.MainBundlePath}/Logo.jpg`;
 const QR_PATH = Platform.OS === 'android' ? 'qr.jpg' : `${RNFS.MainBundlePath}/qr.jpg`;
 
-// Helper: Convert local image to Base64
+function logEvent(connected, message) {
+  console.log('📢 STATUS EVENT:', message);
+  printerEvents.emit('status', { connected, message });
+}
+
 async function localImageToBase64(localPath) {
   try {
+    console.log('🖼️ Converting image to Base64:', localPath);
     if (Platform.OS === 'android') {
-      return await RNFS.readFileAssets(localPath, 'base64');
+      const data = await RNFS.readFileAssets(localPath, 'base64');
+      console.log('✅ Image read from assets');
+      return data;
     } else {
-      return await RNFS.readFile(localPath, 'base64');
+      const data = await RNFS.readFile(localPath, 'base64');
+      console.log('✅ Image read from bundle');
+      return data;
     }
   } catch (err) {
-    console.error('Error converting local image to base64:', err);
+    console.error('❌ Error converting image:', err.message);
     throw err;
   }
 }
 
-// Helper: Center margin for image
 function getImageLeftMargin(imgWidth, printerWidth = 384) {
   return Math.floor((printerWidth - imgWidth) / 2);
 }
@@ -33,135 +43,141 @@ const PrintJobManager = {
   printerConnected: false,
 
   async fetchPendingJobs(printerId = null) {
+    console.log('📡 Fetching pending print jobs...');
     try {
       const res = await axios.get(`${API_BASE}/pending`, { params: { printerId } });
+      console.log(`✅ Received ${res.data?.length || 0} jobs`);
       return res.data || [];
     } catch (err) {
-      console.error('Error fetching jobs:', err);
+      console.error('❌ Error fetching jobs:', err.message);
       return [];
     }
   },
 
- async markJobDone(jobId) {
-  const url = `${API_BASE}/done/${jobId}`;
-  console.log('Deleting job at URL:', url);
-  try {
-    await axios.delete(url);
-    console.log(`✅ Job ${jobId} marked done`);
-  } catch (err) {
-    console.error('Error marking job done:', err.response?.status, err.response?.data || err);
-  }
-},
+  async markJobDone(jobId) {
+    const url = `${API_BASE}/done/${jobId}`;
+    console.log('🗑️ Marking job done:', url);
+    try {
+      await axios.delete(url);
+      console.log(`✅ Job ${jobId} marked done`);
+    } catch (err) {
+      console.error('❌ Error marking job done:', err.message);
+    }
+  },
 
   async connectPrinterOnce(macAddress) {
-  if (this.printerConnected) return;
+    if (this.printerConnected) {
+      console.log('🔁 Printer already connected');
+      logEvent(true, 'Printer already connected');
+      return;
+    }
 
-  try {
-    await BluetoothManager.enableBluetooth();
-    await BluetoothManager.connect(macAddress);
-    this.printerConnected = true;
-    await BluetoothEscposPrinter.printerInit();
-    console.log('🖨️ Printer connected');
-  } catch (err) {
-    console.error('❌ Printer connect failed:', err);
-    throw err;
-  }
-},
+    console.log('🔌 Enabling Bluetooth...');
+    logEvent(false, 'Enabling Bluetooth...');
+
+    try {
+      const devices = await BluetoothManager.enableBluetooth();
+      console.log('✅ Bluetooth enabled. Devices:', devices);
+
+      logEvent(false, 'Connecting to printer...');
+      console.log('📡 Connecting to printer at:', macAddress);
+
+      await BluetoothManager.connect(macAddress);
+      console.log('✅ Connected to printer');
+
+      await BluetoothEscposPrinter.printerInit();
+      console.log('🖨️ Printer initialized');
+
+      this.printerConnected = true;
+      logEvent(true, '✅ Printer connected');
+    } catch (err) {
+      console.error('❌ Printer connect failed:', err.message);
+      logEvent(false, '❌ Printer connection failed');
+    }
+  },
 
   async printInvoiceBLE(order, macAddress = '02:BB:CD:01:7A:78') {
+    console.log('🧾 Starting print for order:', order?.invoiceNo || '(unknown)');
     try {
       await this.connectPrinterOnce(macAddress);
 
-      // 1️⃣ Print Logo
-      try {
-        const logoBase64 = await localImageToBase64(LOGO_PATH);
-        await BluetoothEscposPrinter.printPic(logoBase64, { width: 200, left: getImageLeftMargin(230) });
-      } catch (err) {
-        console.warn('⚠️ Logo print failed:', err);
-      }
+      const logoBase64 = await localImageToBase64(LOGO_PATH);
+      await BluetoothEscposPrinter.printPic(logoBase64, { width: 200, left: getImageLeftMargin(230) });
 
       await BluetoothEscposPrinter.printText('Bhimpur, Odissa, pin - 761043\nContact No:- 9137127558\n', {});
-
-      // 3️⃣ Invoice Info
       await BluetoothEscposPrinter.printText(
         `\nInvoice No: INV${order.invoiceNo || '0001'}\nDate: ${new Date(order.createdAt).toLocaleDateString()}\n`,
         { align: BluetoothEscposPrinter.ALIGN.LEFT }
       );
+
+      await BluetoothEscposPrinter.printText('________________________________\n', {});
+      await BluetoothEscposPrinter.printText('Item            Qty    Amt\n', { bold: true });
       await BluetoothEscposPrinter.printText('________________________________\n', {});
 
-      // 4️⃣ Column Header
-      await BluetoothEscposPrinter.printText('Item            Qty    Amt\n', { align: BluetoothEscposPrinter.ALIGN.LEFT, bold: true });
-      await BluetoothEscposPrinter.printText('________________________________\n', {});
+      try {
+        const items = order.items || [];
+        if (!Array.isArray(items) || items.length === 0) {
+          console.log('⚠️ No items to print for job:', order);
+          return;
+        }
+      } catch (err) {
+        console.error('❌ Error processing items:', err.message);
+        return;
+      }
 
-      // 5️⃣ Items
       for (const item of order.items) {
         const name = item.name.length > 14 ? item.name.substring(0, 14) : item.name.padEnd(14);
         const qty = String(item.quantity).padStart(3);
         const amount = ((item.offerPrice ?? item.price ?? 0) * item.quantity).toFixed(2);
-        await BluetoothEscposPrinter.printText(`${name} ${qty}   Rs${amount}\n`, { align: BluetoothEscposPrinter.ALIGN.LEFT });
+        await BluetoothEscposPrinter.printText(`${name} ${qty}   Rs${amount}\n`, {});
       }
-      await BluetoothEscposPrinter.printText('________________________________\n', {});
 
+      await BluetoothEscposPrinter.printText('________________________________\n', {});
       const totalAmount = Number(order.amount || 0);
       const paidAmount = Number(order.paidAmount || 0);
-      const dueAmount = Number(order.dueAmount || (totalAmount - paidAmount));
+      const dueAmount = totalAmount - paidAmount;
 
-      const paymentStatus =
-        paidAmount >= totalAmount
-          ? 'Fully Paid'
-          : paidAmount > 0
-          ? `Due ₹${dueAmount.toFixed(2)}`
-          : 'Payment Pending';
-
-      // 6️⃣ Totals
-      const totalQty = order.items.reduce((acc, i) => acc + (i.quantity || 0), 0);
       await BluetoothEscposPrinter.printText(
-        `Total Qty: ${totalQty}\nSubtotal: Rs${(order.amount ?? 0).toFixed(2)}\n`,
+        `Total: Rs${totalAmount.toFixed(2)} | Paid: Rs${paidAmount.toFixed(2)} | Due: Rs${dueAmount.toFixed(2)}\n`,
         { bold: true }
       );
-      await BluetoothEscposPrinter.printText(`Payment: ${paymentStatus}\n`, { bold: true });
-      await BluetoothEscposPrinter.printText('********************************\n', {});
 
-      // 7️⃣ Print QR
-      try {
-        const qrBase64 = await localImageToBase64(QR_PATH);
-        await BluetoothEscposPrinter.printPic(qrBase64, { width: 200, left: getImageLeftMargin(200) });
-      } catch (err) {
-        console.warn('⚠️ QR print failed:', err);
-      }
+      const qrBase64 = await localImageToBase64(QR_PATH);
+      await BluetoothEscposPrinter.printPic(qrBase64, { width: 200, left: getImageLeftMargin(200) });
+      await BluetoothEscposPrinter.printText('\nThank you for shopping!\n\n\n\n', {
+        align: BluetoothEscposPrinter.ALIGN.CENTER,
+      });
 
-      // 8️⃣ Thank-you message
-      await BluetoothEscposPrinter.printText('\nThank you for shopping!\n', { align: BluetoothEscposPrinter.ALIGN.CENTER });
-      await BluetoothEscposPrinter.printText('********************************\n\n\n\n', {});
-
-      console.log('🖨️ Print successful');
-      // Beep 1 time, 300ms duration, 100% volume
-      await BluetoothEscposPrinter.printerSound(1, 200);
-
+      console.log('✅ Print successful');
     } catch (err) {
-      console.error('❌ Print failed:', err);
+      console.error('❌ Print failed:', err.message);
     }
   },
 
   async processJobs() {
+    console.log('🔁 Checking for print jobs...');
     const jobs = await this.fetchPendingJobs();
-    if (!jobs.length) return;
+    if (!jobs.length) {
+      console.log('⏸️ No pending jobs.');
+      return;
+    }
 
-    console.log(`🖨️ Found ${jobs.length} print job(s)`);
-
+    console.log(`🖨️ Found ${jobs.length} job(s)`);
     for (const job of jobs) {
       try {
         const order = JSON.parse(job.text);
         await this.printInvoiceBLE(order);
         await this.markJobDone(job.id);
       } catch (err) {
-        console.error('Error printing job:', err);
+        console.error('❌ Error printing job:', err.message);
       }
     }
   },
 
   startPolling(intervalMs = 5000) {
+    console.log(`🚀 Starting job polling every ${intervalMs / 1000}s`);
     if (pollingInterval) clearInterval(pollingInterval);
+    this.processJobs();
     pollingInterval = setInterval(() => this.processJobs(), intervalMs);
   },
 
@@ -169,9 +185,10 @@ const PrintJobManager = {
     if (pollingInterval) {
       clearInterval(pollingInterval);
       pollingInterval = null;
-      console.log('Stopped polling');
+      console.log('🛑 Stopped polling');
     }
   },
 };
 
 export default PrintJobManager;
+export { printerEvents };

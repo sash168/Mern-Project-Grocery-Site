@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import { useAppContext } from '../context/AppContext';
@@ -17,12 +17,11 @@ function Navbar() {
     axios,
   } = useAppContext();
 
+  const dropdownRef = useRef(null);
+
   const logout = async () => {
     try {
-      console.log("Before logout, document.cookie:", document.cookie);
       const { data } = await axios.get('api/user/logout', { withCredentials: true });
-      console.log("Logout response:", data);
-      console.log("After logout, document.cookie:", document.cookie);
       if (data.success) {
         toast.success(data.message);
         setUser(null);
@@ -34,6 +33,28 @@ function Navbar() {
       toast.error(error.message);
     }
   };
+
+  // ✅ Detect click outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setProfileOpen(false);
+      }
+    };
+
+    if (profileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [profileOpen]);
 
   useEffect(() => {
     if (typeof searchQuery === 'string' && searchQuery.length > 0 && window.location.pathname !== '/products') {
@@ -80,8 +101,8 @@ function Navbar() {
             )}
           </div>
 
-          {/* Profile Icon */}
-          <div className="relative">
+          {/* Profile Icon + Dropdown */}
+          <div className="relative" ref={dropdownRef}>
             <img
               src={assets.profile_icon}
               className="w-9 sm:w-10 cursor-pointer"
@@ -90,59 +111,51 @@ function Navbar() {
             />
 
             {profileOpen && (
-            <ul className="absolute top-10 right-0 bg-white shadow border border-gray-200 py-2.5 w-40 rounded-md text-sm z-50">
-              {/* Show only when user is logged in */}
-              {user ? (
-                <>
-                  {/* Home + All Products (visible only when logged in) */}
-                  <li
-                    className="lg:hidden p-2 hover:bg-primary/10 cursor-pointer"
-                    onClick={() => { navigate('/'); setProfileOpen(false); }}
-                  >
-                    Home
-                  </li>
-                  <li
-                    className="lg:hidden p-2 hover:bg-primary/10 cursor-pointer"
-                    onClick={() => { navigate('/products'); setProfileOpen(false); }}
-                  >
-                    All Products
-                  </li>
+              <ul className="absolute top-10 right-0 bg-white shadow border border-gray-200 py-2.5 w-40 rounded-md text-sm z-50">
+                {user ? (
+                  <>
+                    <li
+                      className="lg:hidden p-2 hover:bg-primary/10 cursor-pointer"
+                      onClick={() => { navigate('/'); setProfileOpen(false); }}
+                    >
+                      Home
+                    </li>
+                    <li
+                      className="lg:hidden p-2 hover:bg-primary/10 cursor-pointer"
+                      onClick={() => { navigate('/products'); setProfileOpen(false); }}
+                    >
+                      All Products
+                    </li>
 
-                  <li
-                    onClick={() => { navigate('/my-orders'); setProfileOpen(false); }}
-                    className="p-2 hover:bg-primary/10 cursor-pointer"
-                  >
-                    My Order
-                  </li>
-                  <li
-                    onClick={() => { logout(); setProfileOpen(false); }}
-                    className="p-2 hover:bg-primary/10 cursor-pointer"
-                  >
-                    Logout
-                  </li>
-                </>
-              ) : (
-                <>
-                  {/* For non-logged users */}
+                    <li
+                      onClick={() => { navigate('/my-orders'); setProfileOpen(false); }}
+                      className="p-2 hover:bg-primary/10 cursor-pointer"
+                    >
+                      My Order
+                    </li>
+                    <li
+                      onClick={() => { logout(); setProfileOpen(false); }}
+                      className="p-2 hover:bg-primary/10 cursor-pointer"
+                    >
+                      Logout
+                    </li>
+                  </>
+                ) : (
                   <li
                     onClick={() => { setShowUserLogin(true); setProfileOpen(false); }}
                     className="p-2 hover:bg-primary/10 cursor-pointer"
                   >
-                    Login
+                    User Login
                   </li>
-                </>
-              )}
-
-              {/* Always visible */}
-              <li
-                onClick={() => { navigate('/seller'); setProfileOpen(false); }}
-                className="p-2 hover:bg-primary/10 cursor-pointer"
-              >
-                Seller Login
-              </li>
-            </ul>
-          )}
-
+                )}
+                <li
+                  onClick={() => { navigate('/seller'); setProfileOpen(false); }}
+                  className="p-2 hover:bg-primary/10 cursor-pointer"
+                >
+                  Admin Login
+                </li>
+              </ul>
+            )}
           </div>
         </div>
       </div>
