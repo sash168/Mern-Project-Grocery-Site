@@ -77,13 +77,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.billingstore"
+    namespace 'com.anonymous.billingstore'
     defaultConfig {
-        applicationId "com.billingstore"
-        minSdkVersion rootProject.ext.minSdkVersion
+        applicationId 'com.anonymous.billingstore'
+        minSdkVersion 24
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "0.0.1"
     }
     signingConfigs {
         debug {
@@ -117,3 +117,17 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+project.afterEvaluate {
+    subprojects { subproject ->
+        if (subproject.plugins.hasPlugin("com.android.library")) {
+            subproject.android.compileSdk = 35
+            subproject.android.buildToolsVersion = "35.0.0"
+
+            if (subproject.android.defaultConfig.minSdkVersion.apiLevel < 24) {
+                subproject.android.defaultConfig.minSdkVersion = 24
+            }
+        }
+    }
+}
+

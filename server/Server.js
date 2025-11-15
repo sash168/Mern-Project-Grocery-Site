@@ -44,7 +44,8 @@ const allowedOrigins = [
   'http://192.168.0.102:5173',
   'https://sasha-grocery-site.vercel.app', 
   'https://sasha-grocery-site-git-main-sashmita-mahapatros-projects.vercel.app', 
-  'https://sasha-grocery-site-q6b0l3peq-sashmita-mahapatros-projects.vercel.app'
+  'https://sasha-grocery-site-q6b0l3peq-sashmita-mahapatros-projects.vercel.app',
+  'https://www.s3retailhub.com'
 ];
 
 app.post('/stripe', express.raw({ type: 'application/json' }), stripeWebhooks);

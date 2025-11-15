@@ -9,7 +9,7 @@ const API_BASE = 'https://mern-project-grocery-site.vercel.app/api/print';
 let pollingInterval = null;
 
 // ✅ Local asset paths
-const LOGO_PATH = Platform.OS === 'android' ? 'Logo.jpg' : `${RNFS.MainBundlePath}/Logo.jpg`;
+const LOGO_PATH = Platform.OS === 'android' ? 'Logo1.jpeg' : `${RNFS.MainBundlePath}/Logo.jpg`;
 const QR_PATH = Platform.OS === 'android' ? 'qr.jpg' : `${RNFS.MainBundlePath}/qr.jpg`;
 
 function logEvent(connected, message) {
@@ -98,11 +98,12 @@ const PrintJobManager = {
 
   async printInvoiceBLE(order, macAddress = '02:BB:CD:01:7A:78') {
     console.log('🧾 Starting print for order:', order?.invoiceNo || '(unknown)');
+    console.log("🧾 printInvoice() called with order:", order);
     try {
       await this.connectPrinterOnce(macAddress);
 
       const logoBase64 = await localImageToBase64(LOGO_PATH);
-      await BluetoothEscposPrinter.printPic(logoBase64, { width: 200, left: getImageLeftMargin(230) });
+      await BluetoothEscposPrinter.printPic(logoBase64, { width: 150, left: getImageLeftMargin(230) });
 
       await BluetoothEscposPrinter.printText('Bhimpur, Odissa, pin - 761043\nContact No:- 9137127558\n', {});
       await BluetoothEscposPrinter.printText(
@@ -115,22 +116,30 @@ const PrintJobManager = {
       await BluetoothEscposPrinter.printText('________________________________\n', {});
 
       try {
-        const items = order.items || [];
-        if (!Array.isArray(items) || items.length === 0) {
-          console.log('⚠️ No items to print for job:', order);
+        const items = Array.isArray(order?.items) ? order.items : [];
+        if (items.length === 0) {
+          console.log('⚠️ No valid items to print for job:', order?.invoiceNo);
           return;
         }
+
       } catch (err) {
         console.error('❌ Error processing items:', err.message);
         return;
       }
 
       for (const item of order.items) {
-        const name = item.name.length > 14 ? item.name.substring(0, 14) : item.name.padEnd(14);
-        const qty = String(item.quantity).padStart(3);
-        const amount = ((item.offerPrice ?? item.price ?? 0) * item.quantity).toFixed(2);
+        const productName = item?.product?.name ?? 'Unknown';
+        const name =
+          productName.length > 14
+            ? productName.substring(0, 14)
+            : productName.padEnd(14);
+        const qty = String(item.quantity ?? 0).padStart(3);
+        const price = item?.product?.offerPrice ?? item?.product?.price ?? 0;
+        const amount = (price * (item.quantity ?? 0)).toFixed(2);
+
         await BluetoothEscposPrinter.printText(`${name} ${qty}   Rs${amount}\n`, {});
       }
+
 
       await BluetoothEscposPrinter.printText('________________________________\n', {});
       const totalAmount = Number(order.amount || 0);
@@ -144,7 +153,8 @@ const PrintJobManager = {
 
       const qrBase64 = await localImageToBase64(QR_PATH);
       await BluetoothEscposPrinter.printPic(qrBase64, { width: 200, left: getImageLeftMargin(200) });
-      await BluetoothEscposPrinter.printText('\nThank you for shopping!\n\n\n\n', {
+      await BluetoothEscposPrinter.printText('********************************\n', {});
+      await BluetoothEscposPrinter.printText('Thank you for shopping!\n\n\n\n', {
         align: BluetoothEscposPrinter.ALIGN.CENTER,
       });
 

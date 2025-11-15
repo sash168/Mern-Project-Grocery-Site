@@ -1,4 +1,4 @@
-package com.billingstore
+package com.anonymous.billingstore
 
 import android.app.Application
 import com.facebook.react.PackageList
