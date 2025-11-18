@@ -29,8 +29,10 @@ import organic_vegitable_image from "./organic_vegitable_image.png";
 import fresh_fruits_image from "./fresh_fruits_image.png";
 import bottles_image from "./bottles_image.png";
 import maggi_image from "./maggi_image.png";
-import dairy_product_image from "./dairy_product_image.png";
+import agarbatti_image from "./incense_sticks.png";
+import chocolates from "./chocolates1.png";
 import bakery_image from "./bakery_image.png";
+import dairy_image from "./dairy_product_image.png";
 import grain_image from "./grain_image.png";
 import potato_image_1 from "./potato_image_1.png";
 import potato_image_2 from "./potato_image_2.png";
@@ -117,9 +119,15 @@ export const categories = [
     bgColor: "#E1F5EC",
   },
   {
-    text: "Dairy Products",
-    path: "Dairy",
-    image: dairy_product_image,
+    text: "Incense/Agarbatti",
+    path: "incense-agarbatti",
+    image: agarbatti_image,
+    bgColor: "#E1F5EC",
+  },
+  {
+    text: "Chocolates & Sweets",
+    path: "chocolates-sweets",
+    image: chocolates,
     bgColor: "#FEE6CD",
   },
   {
@@ -137,7 +145,7 @@ export const categories = [
   {
     text: "Others",
     path: "Others",
-    image: grain_image,
+    image: dairy_image,
     bgColor: "#FEE0E0",
   }
 ];

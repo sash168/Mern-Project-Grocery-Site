@@ -20,20 +20,21 @@ const ProductCard = ({ product }) => {
         }`}
       >
         {/* Image Section */}
-        <div className="relative flex items-center justify-center h-48">
+        <div className="relative flex items-center justify-center h-48 md:h-56 overflow-hidden">
           <img
-            className="group-hover:scale-105 transition w-full h-full object-contain"
+            className="transition duration-300 group-hover:scale-105 object-contain w-full h-full p-2"
             src={product.image[0]}
             alt={product.name}
           />
 
-          {/* Out of Stock Badge (on top of image only) */}
+          {/* Out of Stock Badge */}
           {isOutOfStock && (
             <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded shadow">
               Out of Stock
             </div>
           )}
         </div>
+
 
         {/* Product Info */}
         <div className="flex flex-col justify-between flex-1 mt-3">
@@ -86,21 +87,26 @@ const ProductCard = ({ product }) => {
                   Add
                 </button>
               ) : (
-                <div className="flex items-center justify-center gap-2 w-20 h-9 bg-primary/25 rounded select-none">
+                <div className="flex items-center justify-center gap-2 w-24 h-10 bg-primary/25 rounded select-none">
                   <button
                     onClick={() => removeFromCart(product._id)}
-                    className="cursor-pointer text-md px-2 h-full"
+                    className="cursor-pointer text-xl font-bold text-primary-500 px-3 h-full flex items-center"
                   >
-                    -
+                    –
                   </button>
-                  <span className="w-5 text-center">{cartItems[product._id]}</span>
+
+                  <span className="w-6 text-center text-base font-semibold text-primary-500">
+                    {cartItems[product._id]}
+                  </span>
+
                   <button
                     onClick={() => addToCart(product._id)}
-                    className="cursor-pointer text-md px-2 h-full"
+                    className="cursor-pointer text-xl font-bold text-primary-500 px-3 h-full flex items-center"
                   >
                     +
                   </button>
                 </div>
+
               )}
             </div>
           </div>

@@ -72,13 +72,8 @@ function Orders() {
     const add = Number(paidAmountInput);
     const total = Number(order.amount);
 
-    // current paid / due from order (use DB values if present)
-    const currentPaid = Number(order.paidAmount || 0);
-    const currentDue = Number(
-      order.dueAmount !== undefined && order.dueAmount !== null
-        ? order.dueAmount
-        : Math.max(0, total - currentPaid)
-    );
+    const currentPaid = Number(order.paidAmount ?? 0);
+    const currentDue = Number(order.dueAmount ?? (total - currentPaid));
 
     if (isNaN(add) || add <= 0) {
       toast.error('Please enter a valid paid amount (greater than 0)');
@@ -89,6 +84,7 @@ function Orders() {
       toast.error(`You can only pay up to ₹${currentDue}`);
       return;
     }
+
 
     const newPaidAmount = currentPaid + add;
     const newDueAmount = Math.max(0, total - newPaidAmount);
@@ -207,11 +203,20 @@ function Orders() {
               {order.address ? (
                 <>
                   <p className="text-black/80 font-medium">
-                    {order.address?.firstName} {order.address?.lastName}
+                    {order.address?.name}
                   </p>
-                  <p>{order.address?.street} - {order.address?.city}</p>
-                  <p>{order.address?.state}, {order.address?.zipcode}, {order.address?.country}</p>
+
+                  <p>
+                    {order.address?.day} - {order.address?.street}
+                  </p>
+
+                  {order.address?.addressInfo && (
+                    <p>{order.address?.addressInfo}</p>
+                  )}
+
+                  <p>{order.address?.zipcode}</p>
                   <p>{order.address?.phone}</p>
+
                 </>
               ) : (
                 <p className="text-red-500 font-medium">Address Deleted / Unavailable</p>
@@ -225,7 +230,13 @@ function Orders() {
             {/* 📦 Payment + Delivery Info */}
             <div className="flex flex-col text-sm md:text-base text-black/70 w-full md:w-60 space-y-2">
               <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
-              <p>Delivery Day: <span className="text-green-600 font-medium">{order.address?.day || 'N/A'}</span></p>
+              <p>
+                Delivery Day: 
+                <span className="text-black/70 font-medium">
+                   {order.address ? `${order.address.day} - ${order.address.street}` : "N/A"}
+                </span>
+              </p>
+
 
               <p>
                 Payment:

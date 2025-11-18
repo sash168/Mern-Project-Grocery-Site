@@ -35,7 +35,12 @@ export const placeOrderCOD = async (req, res) => {
       amount,
       address,
       paymentType: 'COD',
+      paidAmount: 0,
+      dueAmount: amount,
+      paymentStatus: `Due ₹${amount}`,
     });
+
+    console.log("Creating order with amount:", amount);
 
     return res.json({ success: true, message: "Order Placed Successfully" });
   } catch (e) {
@@ -82,6 +87,9 @@ export const placeOrderStripe = async (req, res) => {
       amount,
       address,
       paymentType: 'Online',
+      paidAmount: 0,
+      dueAmount: amount,
+      paymentStatus: `Due ₹${amount}`,
     });
 
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
@@ -213,11 +221,17 @@ export const updatePayment = async (req, res) => {
     const order = await Order.findById(id);
     if (!order) return res.json({ success: false, message: "Order not found" });
 
-    order.paymentStatus = paymentStatus;
-    order.dueAmount = dueAmount || 0;
-    order.paidAmount = order.amount - (dueAmount || 0);
-    order.isPaid = paymentStatus === 'Fully Paid';
+    const total = order.amount;
+    const newDue = Number(dueAmount);
 
+    // auto-calculated fields
+    order.dueAmount = newDue;
+    order.paidAmount = total - newDue;
+    
+    order.paymentStatus = paymentStatus;
+    order.isPaid = newDue === 0;
+
+    console.log("Updating payment for:", id, "due:", dueAmount);
 
     await order.save();
 
@@ -226,6 +240,7 @@ export const updatePayment = async (req, res) => {
     res.json({ success: false, message: "Error updating payment: " + e.message });
   }
 };
+
 
 // ✅ Update delivery status
 export const updateDelivery = async (req, res) => {

@@ -4,15 +4,19 @@ import toast from 'react-hot-toast';
 
 const Login = () => {
   const { setShowUserLogin, axios, navigate, setUser } = useAppContext();
-  const [state, setState] = React.useState('login');
-  const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [phone, setPhone] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [name, setName] = React.useState("");
+  const [state, setState] = React.useState("login");
 
   const onSubmitHandler = async (e) => {
     try {
       e.preventDefault();
-      const { data } = await axios.post(`api/user/${state}`, { name, email, password });
+      const { data } = await axios.post(`api/user/${state}`, {
+        name,
+        phone,
+        password,
+      });
 
       if (data.success) {
         navigate('/');
@@ -30,70 +34,70 @@ const Login = () => {
       className="fixed inset-0 z-30 flex items-center justify-center bg-black/50 px-4"
     >
       <form
-        onSubmit={onSubmitHandler}
         onClick={(e) => e.stopPropagation()}
-        className="flex flex-col gap-4 w-full max-w-[22rem] sm:max-w-sm bg-white p-6 sm:p-8 rounded-lg shadow-xl border border-gray-200 text-sm text-gray-600"
+        onSubmit={onSubmitHandler}
+        className="flex flex-col gap-4 w-full max-w-[24rem] bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-200 text-gray-700"
       >
-        <p className="text-xl sm:text-2xl font-medium text-center">
-          <span className="text-primary">User</span>{' '}
-          {state === 'login' ? 'Login' : 'Sign Up'}
+        <p className="text-2xl font-semibold text-center">
+          <span className="text-primary">User</span> {state === "login" ? "Login" : "Sign Up"}
         </p>
 
-        {state === 'register' && (
-          <div className="w-full">
-            <p className="text-gray-700 text-sm">Name</p>
+        {state === "register" && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Name</label>
             <input
-              onChange={(e) => setName(e.target.value)}
-              value={name}
-              placeholder="Enter your name"
-              className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary text-sm sm:text-base"
               type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border border-gray-300 rounded-md p-2 outline-primary"
+              placeholder="Enter your name"
               required
             />
           </div>
         )}
 
-        <div className="w-full">
-          <p className="text-gray-700 text-sm">Email</p>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Phone Number</label>
           <input
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
-            placeholder="Enter your email"
-            className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary text-sm sm:text-base"
-            type="email"
+            type="text"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            maxLength={10}
+            className="border border-gray-300 rounded-md p-2 outline-primary"
+            placeholder="Enter phone number"
             required
           />
         </div>
 
-        <div className="w-full">
-          <p className="text-gray-700 text-sm">Password</p>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Password</label>
           <input
-            onChange={(e) => setPassword(e.target.value)}
-            value={password}
-            placeholder="Enter your password"
-            className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary text-sm sm:text-base"
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="border border-gray-300 rounded-md p-2 outline-primary"
+            placeholder="Enter password"
             required
           />
         </div>
 
-        <p className="text-gray-600 text-sm sm:text-base">
-          {state === 'register' ? (
+        <p className="text-sm text-center">
+          {state === "register" ? (
             <>
-              Already have an account?{' '}
+              Already have an account?{" "}
               <span
-                onClick={() => setState('login')}
-                className="text-dull-primary font-medium cursor-pointer"
+                onClick={() => setState("login")}
+                className="text-primary font-medium cursor-pointer"
               >
                 Login here
               </span>
             </>
           ) : (
             <>
-              Create an account?{' '}
+              Create an account?{" "}
               <span
-                onClick={() => setState('register')}
-                className="text-dull-primary font-medium cursor-pointer"
+                onClick={() => setState("register")}
+                className="text-primary font-medium cursor-pointer"
               >
                 Sign up
               </span>
@@ -101,8 +105,11 @@ const Login = () => {
           )}
         </p>
 
-        <button className="bg-primary hover:bg-dull-primary transition-all text-white w-full py-2 rounded-md mt-2 text-sm sm:text-base">
-          {state === 'register' ? 'Create Account' : 'Login'}
+        <button
+          type="submit"
+          className="bg-primary hover:bg-dull-primary transition-all text-white font-medium w-full py-2 rounded-md mt-2"
+        >
+          {state === "register" ? "Create Account" : "Login"}
         </button>
       </form>
     </div>

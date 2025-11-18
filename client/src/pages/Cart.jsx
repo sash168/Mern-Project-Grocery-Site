@@ -216,6 +216,13 @@ const Cart = () => {
                   .join(", ")
               : "No address selected"}
           </p>
+          {(selectedAddress?.day || selectedAddress?.street) && (
+              <p className="text-gray-600 text-sm mt-1 font-medium">
+                Delivery Day: 
+                {selectedAddress.day ? ` ${selectedAddress.day}` : ''}
+                {selectedAddress.street ? ` — ${selectedAddress.street}` : ''}
+              </p>
+            )}
 
           <button
             onClick={() => setShowAddress((prev) => !prev)}

@@ -2,82 +2,87 @@ import User from "../models/User.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';  
 
-//Register User API : api/user/register
 export const register = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, phone, password } = req.body;
 
-        if (!name || !email || !password) {
-            return res.json({success : false, message : 'Missing Details'})
-        }
+        if (!name || !phone || !password)
+            return res.json({ success: false, message: "Missing details" });
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.json({success : false, message : 'User Email already present'})
-        }
+        const existingUser = await User.findOne({ phone });
+        if (existingUser)
+            return res.json({ success: false, message: "Phone number already exists" });
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await User.create({ name, email, password : hashedPassword });
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        
-        res.cookie('token', token, {
-            httpOnly: true, // secure: can't be accessed by JS
-            secure: false,
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000, //cookie expiration time
-        })
+        const user = await User.create({
+            name,
+            phone,
+            password: hashedPassword,
+        });
 
-        return res.json({ success: true, user: {email: user.email, name: user.name}})
-    }
-    catch (e) {
-        console.log(e.message);
-        res.json({ success: false, message: "Error occured while creating user "+ e.message});
-    }
-}
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-
-//Login User
-
-export const login = async(req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.json({ success: false, message: 'Email and Password is required' }); 
-        }
-
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.json({ success: false, message: 'User Email not present' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password)
-        if (!isMatch) {
-            return res.json({success : false, message : 'Password doesnt match'})
-        }
-
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-        console.log("NODE_ENV:", process.env.NODE_ENV);
-        
-        res.cookie('token', token, {
+        res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // true on Vercel
+            secure: process.env.NODE_ENV === "production",
             sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        console.log("Set Cookie (User):", token);
+        return res.json({
+            success: true,
+            user: { name: user.name, phone: user.phone },
+        });
 
-        return res.json({ success: true, user: {email: user.email, name: user.name}})
-        
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: "Error creating user " + error.message,
+        });
     }
-    catch (e) {
-        console.log(e.message);
-        res.json({ success: false, message: "Error occured while logging user "+ e.message});
+};
+
+
+export const login = async (req, res) => {
+    try {
+        const { phone, password } = req.body;
+
+        if (!phone || !password)
+            return res.json({ success: false, message: "Phone & password required" });
+
+        const user = await User.findOne({ phone });
+        if (!user)
+            return res.json({ success: false, message: "Phone number not registered" });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch)
+            return res.json({ success: false, message: "Incorrect password" });
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: "7d",
+        });
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.json({
+            success: true,
+            user: { name: user.name, phone: user.phone },
+        });
+
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: "Login error: " + error.message,
+        });
     }
-}
+};
+
 
 //Check Auth
 export const isAuth = async(req, res) => {
