@@ -122,7 +122,7 @@ export const categories = [
     text: "Incense/Agarbatti",
     path: "incense-agarbatti",
     image: agarbatti_image,
-    bgColor: "#E1F5EC",
+    bgColor: "#E0F6FE",
   },
   {
     text: "Chocolates & Sweets",
@@ -130,12 +130,12 @@ export const categories = [
     image: chocolates,
     bgColor: "#FEE6CD",
   },
-  {
-    text: "Bakery & Breads",
-    path: "Bakery",
-    image: bakery_image,
-    bgColor: "#E0F6FE",
-  },
+  // {
+  //   text: "Bakery & Breads",
+  //   path: "Bakery",
+  //   image: bakery_image,
+  //   bgColor: "#E0F6FE",
+  // },
   {
     text: "Masalas",
     path: "Masalas",
