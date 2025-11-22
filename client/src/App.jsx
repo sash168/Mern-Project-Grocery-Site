@@ -41,6 +41,7 @@ function App() {
           <Route path='/my-orders' element={<MyOrder />}></Route>
           <Route path='/loader' element={<Loading />}></Route>
           <Route path='/contact' element={<ContactUs />}></Route>
+          <Route path='/login' element={<Login />} />
           <Route path='/seller' element={isSeller ? <SellerLayout/> :  <SellerLogin/>}>
             <Route index element={isSeller ? <AddProduct /> : null} />
             <Route path='product-list' element={<ProductList/>} />

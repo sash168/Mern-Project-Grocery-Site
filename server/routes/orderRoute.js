@@ -11,8 +11,8 @@ ordreRouter.post('/cod', authUser, placeOrderCOD);
 ordreRouter.post('/stripe', authUser, placeOrderStripe);
 ordreRouter.get('/user', authUser, getUserOrders);
 ordreRouter.get('/seller', authSeller, getAllOrders);
-ordreRouter.put('/updatePayment/:id', authUser, updatePayment);
-ordreRouter.put('/updateDelivery/:id', authUser, updateDelivery);
+ordreRouter.put('/updatePayment/:orderId', authSeller, updatePayment);
+ordreRouter.put('/updateDelivery/:id', authSeller, updateDelivery);
 // ordreRouter.get("/fix-old-orders", async (req, res) => {
 //   try {
 //     const orders = await Order.find({ dueAmount: 0 });

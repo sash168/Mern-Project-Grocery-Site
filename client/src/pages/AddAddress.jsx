@@ -29,16 +29,15 @@ const DropdownField = ({ name, options, handleChange, value, placeholder }) => (
 );
 
 function AddAddress() {
-  const [address, setAddress] = useState({
-    name: '',
-    street: '',
-    zipcode: '',
-    phone: '',
-    addressInfo: '' // new field
-  });
-
   const [day, setDay] = useState('');
   const { axios, user, navigate } = useAppContext();
+  const [address, setAddress] = useState({
+    name: user?.name || "",
+    phone: user?.phone || "",
+    street: "",
+    zipcode: "",
+    addressInfo: ""
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,6 +73,11 @@ function AddAddress() {
 
   useEffect(() => {
     if (!user) navigate('/cart');
+    setAddress(prev => ({
+      ...prev,
+      name: user.name || '',
+      phone: user.phone || ''
+    }));
   }, []);
 
   const dayOptions = [

@@ -17,6 +17,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { specs, swaggerUi } from './configs/swagger.js';
 import printRoutes from './routes/printRoutes.js';
+import Order from './models/Order.js';
 
 // ...existing code...
 const app = express();
@@ -55,7 +56,6 @@ app.use(express.json());
 app.use(cookieParser());
 const corsOptions = {
   origin: (origin, callback) => {
-    console.log("CORS check:", origin); // debug incoming origin
     if (!origin || allowedOrigins.includes(origin)) callback(null, true);
     else callback(new Error("Not allowed by CORS"));
   },
@@ -80,6 +80,17 @@ app.use('/api/cart', cartRouter);
 app.use('/api/address', addressRouter);
 app.use('/api/order', ordreRouter);
 app.use('/api/print', printRoutes);
+//to delete all orders - for testing purpose only
+// app.get("/admin/delete-all-orders", async (req, res) => {
+//   try {
+//     await Order.deleteMany({});
+//     return res.json({ success: true, message: "All orders deleted" });
+//   } catch (e) {
+//     return res.json({ success: false, message: e.message });
+//   }
+// });
+
+
 
 app.use('/api-docs',swaggerUi.serve,swaggerUi.setup(specs,{
     explorer: true,

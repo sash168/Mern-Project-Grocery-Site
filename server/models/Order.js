@@ -18,6 +18,7 @@ const orderSchema = mongoose.Schema({
   dueAmount: { type: Number, default: 0 },
   deliveryStatus: { type: String, default: 'Pending' },
   paidAmount: { type: Number, default: 0 },
+  carriedFromPrevious: { type: Number, default: 0 },
 
 }, { timestamps: true });
 

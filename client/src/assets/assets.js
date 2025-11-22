@@ -116,7 +116,7 @@ export const categories = [
     text: "Snacks & Instant Foods",
     path: "snacks",
     image: maggi_image,
-    bgColor: "#E1F5EC",
+    bgColor: "#FFF3E3",
   },
   {
     text: "Incense/Agarbatti",
@@ -140,7 +140,7 @@ export const categories = [
     text: "Masalas",
     path: "Masalas",
     image: masala_image,
-    bgColor: "#FFF3E3",
+    bgColor: "#E1F5EC",
   },
   {
     text: "Others",

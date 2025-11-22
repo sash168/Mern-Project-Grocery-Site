@@ -8,6 +8,8 @@ const Login = () => {
   const [password, setPassword] = React.useState("");
   const [name, setName] = React.useState("");
   const [state, setState] = React.useState("login");
+  const [highlightRegister, setHighlightRegister] = React.useState(false);
+
 
   const onSubmitHandler = async (e) => {
     try {
@@ -22,7 +24,13 @@ const Login = () => {
         navigate('/');
         setShowUserLogin(false);
         setUser(data.user);
-      } else toast.error(data.message);
+      } else {
+        toast.error(data.message);
+        if (data?.message?.toLowerCase().includes("not registered")) {
+          setState("register");
+          setHighlightRegister(true);
+        }
+      }
     } catch (error) {
       toast.error(error.message);
     }
@@ -96,8 +104,7 @@ const Login = () => {
             <>
               Create an account?{" "}
               <span
-                onClick={() => setState("register")}
-                className="text-primary font-medium cursor-pointer"
+                onClick={() => setState("register")} className="text-primary font-medium cursor-pointer"
               >
                 Sign up
               </span>

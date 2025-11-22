@@ -133,11 +133,15 @@ const Cart = () => {
   const placeOrder = async () => {
     if (!user) {
       toast.error("Please login to place an order");
-      navigate("/");
+      navigate("/login");
       return;
     }
 
-    if (!selectedAddress?._id) return toast.error("Please select a valid address");
+    if (!selectedAddress?._id) {
+      toast.error("Please add/select an address");
+      navigate("/add-address");
+      return;
+    }
 
     try {
       const { data } = await axios.post("/api/order/cod", {

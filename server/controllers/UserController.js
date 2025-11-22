@@ -53,7 +53,7 @@ export const login = async (req, res) => {
 
         const user = await User.findOne({ phone });
         if (!user)
-            return res.json({ success: false, message: "Phone number not registered" });
+            return res.json({ success: false, message: "Phone number not registered - Please check number or Sign up" });
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch)
@@ -109,13 +109,11 @@ export const isAuth = async(req, res) => {
 
 export const logout = async (req, res) => {
     try {
-        console.log("Incoming Cookies:", req.cookies);
-        res.clearCookie('sellerToken', {
+        res.clearCookie('token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
         });
-        console.log("Incoming Cookies:", req.cookies);
         return res.json({
             success: true, message:"Logged out"
         })

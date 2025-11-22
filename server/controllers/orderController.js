@@ -3,18 +3,17 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import stripe from 'stripe';
 import mongoose from 'mongoose';
-import Address from '../models/Address.js'; // ✅ Add this import
+import Address from '../models/Address.js';
 
 export const placeOrderCOD = async (req, res) => {
   try {
     const { items, address } = req.body;
     const { userId } = req;
 
-    if (!address || !mongoose.Types.ObjectId.isValid(address) || items.length === 0) {
+    if (!address || !mongoose.Types.ObjectId.isValid(address) || !items || items.length === 0) {
       return res.json({ success: false, message: "Address and valid details are required" });
     }
 
-    // ✅ Get address details
     const addressDoc = await Address.findById(address);
     if (!addressDoc) return res.json({ success: false, message: "Invalid address" });
 
@@ -29,6 +28,15 @@ export const placeOrderCOD = async (req, res) => {
 
     amount = Math.floor(amount);
 
+    // --- NEW: sum all previous unpaid dues for this user ---
+    const unpaidOrders = await Order.find({ userId, dueAmount: { $gt: 0 } });
+    const prevDue = unpaidOrders.reduce((acc, o) => {
+      const due = Number(o.dueAmount ?? (o.amount - (o.paidAmount || 0)));
+      return acc + (isNaN(due) ? 0 : due);
+    }, 0);
+
+    const totalDue = amount;
+
     await Order.create({
       userId,
       items,
@@ -36,11 +44,11 @@ export const placeOrderCOD = async (req, res) => {
       address,
       paymentType: 'COD',
       paidAmount: 0,
-      dueAmount: amount,
-      paymentStatus: `Due ₹${amount}`,
+      dueAmount: totalDue,
+      paymentStatus: `Due ₹${totalDue}`,
     });
 
-    console.log("Creating order with amount:", amount);
+    console.log("Creating order with amount:", amount, "carriedFromPrevious:", prevDue);
 
     return res.json({ success: true, message: "Order Placed Successfully" });
   } catch (e) {
@@ -55,7 +63,7 @@ export const placeOrderStripe = async (req, res) => {
     const { userId } = req;
     const { origin } = req.headers;
 
-    if (!address || items.length === 0) {
+    if (!address || !items || items.length === 0) {
       return res.json({ success: false, message: "Invalid data" });
     }
 
@@ -81,6 +89,15 @@ export const placeOrderStripe = async (req, res) => {
 
     amount = Math.floor(amount);
 
+    // --- NEW: sum all previous unpaid dues for this user ---
+    const unpaidOrders = await Order.find({ userId, dueAmount: { $gt: 0 } });
+    const prevDue = unpaidOrders.reduce((acc, o) => {
+      const due = Number(o.dueAmount ?? (o.amount - (o.paidAmount || 0)));
+      return acc + (isNaN(due) ? 0 : due);
+    }, 0);
+
+    const totalDue = amount + prevDue;
+
     const order = await Order.create({
       userId,
       items,
@@ -88,8 +105,8 @@ export const placeOrderStripe = async (req, res) => {
       address,
       paymentType: 'Online',
       paidAmount: 0,
-      dueAmount: amount,
-      paymentStatus: `Due ₹${amount}`,
+      dueAmount: totalDue,
+      paymentStatus: `Due ₹${totalDue}`,
     });
 
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
@@ -120,6 +137,7 @@ export const placeOrderStripe = async (req, res) => {
 
 
 
+
 //stripe webhook to verify payment
 export const stripeWebhooks = async (req, res) => {
      //stripe gateway initialize
@@ -131,7 +149,7 @@ export const stripeWebhooks = async (req, res) => {
     try {
         event = stripeInstance.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (error) {
-        res.status(400).send('WebHook Error ' , error.message)
+        res.status(400).send('WebHook Error ' + error.message);
     }
 
     //handle event
@@ -185,7 +203,6 @@ export const getUserOrders = async (req, res) => {
         const { userId } = req;
         const orders = await Order.find({
             userId,
-            $or: [{ paymentType: "COD" }, { isPaid: true }]
         }).populate("items.product address").sort({ createdAt: -1 })
         
         return res.json({success:true, orders})
@@ -215,31 +232,65 @@ export const getAllOrders = async (req, res) => {
 // ✅ Update payment status or due amount
 export const updatePayment = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { paymentStatus, dueAmount } = req.body;
+    // support both :orderId and :id just in case
+    const orderId = req.params.orderId || req.params.id;
+    const payAmount = Number(req.body.paidAmount);
 
-    const order = await Order.findById(id);
-    if (!order) return res.json({ success: false, message: "Order not found" });
+    console.log("Updating payment for order:", orderId, "with amount:", payAmount);
 
-    const total = order.amount;
-    const newDue = Number(dueAmount);
+    if (!payAmount || isNaN(payAmount) || payAmount <= 0) {
+      return res.json({ success: false, message: "Invalid payment amount" });
+    }
 
-    // auto-calculated fields
-    order.dueAmount = newDue;
-    order.paidAmount = total - newDue;
-    
-    order.paymentStatus = paymentStatus;
-    order.isPaid = newDue === 0;
+    // find the order requested (optional - to validate the user and show context)
+    const mainOrder = orderId ? await Order.findById(orderId) : null;
+    if (orderId && !mainOrder) return res.json({ success: false, message: "Order not found" });
 
-    console.log("Updating payment for:", id, "due:", dueAmount);
+    const userId = mainOrder ? mainOrder.userId : req.body.userId || req.userId;
+    if (!userId) return res.json({ success: false, message: "User ID not found" });
 
-    await order.save();
+    // get all unpaid orders for the user, oldest first
+    const dueOrders = await Order.find({
+      userId,
+      $or: [{ paymentStatus: { $regex: /^Due/ } }, { dueAmount: { $gt: 0 } }]
+    }).sort({ createdAt: 1 });
 
-    res.json({ success: true, message: "Payment updated successfully" });
-  } catch (e) {
-    res.json({ success: false, message: "Error updating payment: " + e.message });
+    let remainingPayment = payAmount;
+
+    for (const ord of dueOrders) {
+      if (remainingPayment <= 0) break;
+
+      const currentDue = Number(ord.dueAmount ?? (ord.amount - (ord.paidAmount || 0)));
+      if (isNaN(currentDue) || currentDue <= 0) continue;
+
+      if (remainingPayment >= currentDue) {
+        // fully pay this order
+        ord.paidAmount = (ord.paidAmount || 0) + currentDue;
+        ord.dueAmount = 0;
+        ord.paymentStatus = "Fully Paid";
+        remainingPayment -= currentDue;
+      } else {
+        // partial payment
+        ord.paidAmount = (ord.paidAmount || 0) + remainingPayment;
+        ord.dueAmount = currentDue - remainingPayment;
+        ord.paymentStatus = `Due ₹${ord.dueAmount}`;
+        remainingPayment = 0;
+      }
+
+      await ord.save();
+    }
+
+    return res.json({
+      success: true,
+      message: "Payment applied to outstanding orders successfully."
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.json({ success: false, message: "Something went wrong: " + err.message });
   }
 };
+
 
 
 // ✅ Update delivery status

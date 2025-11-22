@@ -73,7 +73,7 @@ function Orders() {
     const total = Number(order.amount);
 
     const currentPaid = Number(order.paidAmount ?? 0);
-    const currentDue = Number(order.dueAmount ?? (total - currentPaid));
+    const currentDue = Number(order.dueAmount ?? 0);
 
     if (isNaN(add) || add <= 0) {
       toast.error('Please enter a valid paid amount (greater than 0)');
@@ -89,14 +89,14 @@ function Orders() {
     const newPaidAmount = currentPaid + add;
     const newDueAmount = Math.max(0, total - newPaidAmount);
     const paymentStatus = newDueAmount === 0 ? 'Fully Paid' : `Due ₹${newDueAmount}`;
+    console.log("Updating payment:", { newPaidAmount, newDueAmount, paymentStatus, currentPaid, add, total });
 
     try {
       const { data } = await axios.put(`/api/order/updatePayment/${order._id}`, {
-        paymentStatus,
-        dueAmount: newDueAmount
-        // backend will compute paidAmount if needed; sending dueAmount is enough
-        // but you may also send paidAmount: newPaidAmount if your backend expects it
+        paidAmount: add
       });
+      console.log("Payment update response:", order.carriedFromPrevious);
+
       if (data.success) {
         toast.success('Payment updated successfully!');
         // clear local input for this order
@@ -183,7 +183,6 @@ function Orders() {
               />
               <div className="flex flex-col gap-1 truncate">
                 {order.items.map((item, idx) => (
-                  console.log(order),
                   <p
                     key={idx}
                     className={`font-medium text-sm md:text-base truncate ${!item.product ? 'text-red-500' : ''}`}
@@ -225,6 +224,12 @@ function Orders() {
               <p className="font-semibold text-lg text-black/60 mt-2">
                 Total: {currency}{order.amount}
               </p>
+              {order.carriedFromPrevious > 0 && (
+                <p className="text-sm text-red-600">
+                  Past Due Added: +{currency}{order.carriedFromPrevious}
+                </p>
+              )}
+
             </div>
 
             {/* 📦 Payment + Delivery Info */}
