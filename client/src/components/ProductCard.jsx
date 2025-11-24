@@ -1,9 +1,10 @@
 import React from "react";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
+import { toast } from "sonner";
 
 const ProductCard = ({ product }) => {
-  const { addToCart, currency, removeFromCart, cartItems, navigate } = useAppContext();
+  const { addToCart, currency, removeFromCart, cartItems, updateCartItem, navigate } = useAppContext();
 
   const isOutOfStock = !product.inStock || product.quantity <= 0;
   const inCart = !!cartItems[product._id];
@@ -71,43 +72,67 @@ const ProductCard = ({ product }) => {
 
             <div onClick={(e) => e.stopPropagation()} className="text-primary">
               {isOutOfStock ? (
-                <button
-                  className="flex items-center justify-center gap-1 bg-gray-200 text-gray-400 border border-gray-300 w-20 h-9 rounded cursor-not-allowed"
-                  disabled
-                >
-                  <img src={assets.cart_icon} alt="cart_icon" className="opacity-50" />
-                  Add
-                </button>
-              ) : !inCart ? (
-                <button
-                  className="flex items-center justify-center gap-1 bg-primary/10 border border-primary/40 w-20 h-9 rounded hover:bg-primary/20 transition"
-                  onClick={() => addToCart(product._id)}
-                >
-                  <img src={assets.cart_icon} alt="cart_icon" />
-                  Add
-                </button>
-              ) : (
-                <div className="flex items-center justify-center gap-2 w-24 h-10 bg-primary/25 rounded select-none">
-                  <button
-                    onClick={() => removeFromCart(product._id)}
-                    className="cursor-pointer text-xl font-bold text-primary-500 px-3 h-full flex items-center"
-                  >
-                    –
-                  </button>
+  <button
+    className="flex items-center justify-center gap-1 bg-gray-200 text-gray-400 border border-gray-300 w-20 h-9 rounded cursor-not-allowed"
+    disabled
+  >
+    <img src={assets.cart_icon} alt="cart_icon" className="opacity-50" />
+    Add
+  </button>
+) : !inCart ? (
+  <button
+    className="flex items-center justify-center gap-1 bg-primary/10 border border-primary/40 w-20 h-9 rounded hover:bg-primary/20 transition"
+    onClick={(e) => {
+      e.stopPropagation();
+      addToCart(product._id);
+    }}
+  >
+    <img src={assets.cart_icon} alt="cart_icon" />
+    Add
+  </button>
+) : (
+  <div
+    className="flex items-center justify-center gap-2 w-24 h-10 bg-primary/25 rounded select-none"
+    onClick={(e) => e.stopPropagation()}
+  >
+    {/* --- MINUS BTN --- */}
+    <button
+      onClick={() => {
+        const qty = cartItems[product._id];
+        if (qty > 1) {
+          // Decrease by one
+          updateCartItem(product._id, qty - 1);
+        } else {
+          removeFromCart(product._id);
+        }
+      }}
+      className="cursor-pointer text-xl font-bold text-primary-500 px-3 h-full flex items-center"
+    >
+      –
+    </button>
 
-                  <span className="w-6 text-center text-base font-semibold text-primary-500">
-                    {cartItems[product._id]}
-                  </span>
+    {/* QUANTITY DISPLAY */}
+    <span className="w-6 text-center text-base font-semibold text-primary-500">
+      {cartItems[product._id]}
+    </span>
 
-                  <button
-                    onClick={() => addToCart(product._id)}
-                    className="cursor-pointer text-xl font-bold text-primary-500 px-3 h-full flex items-center"
-                  >
-                    +
-                  </button>
-                </div>
+    {/* --- PLUS BTN --- */}
+    <button
+      onClick={() => {
+        const qty = cartItems[product._id] || 0;
+        if (qty < product.quantity) {
+          addToCart(product._id);
+        } else {
+          toast.error(`Only ${product.quantity} units available`);
+        }
+      }}
+      className="cursor-pointer text-xl font-bold text-primary-500 px-3 h-full flex items-center"
+    >
+      +
+    </button>
+  </div>
+)}
 
-              )}
             </div>
           </div>
         </div>

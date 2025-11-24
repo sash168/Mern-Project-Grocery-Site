@@ -13,8 +13,11 @@ function ProductCategory() {
     );
 
     const filteredProducts = products.filter(
-        (product) => product.category.toLowerCase() === category
+        (product) => 
+            product.category.toLowerCase() === category &&
+            product.inStock
     );
+
 
     return (
         <div className="mt-20 px-3 sm:px-6 md:px-16">

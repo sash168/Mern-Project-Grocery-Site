@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { assets } from '../assets/assets';
 import { useAppContext } from '../context/AppContext'
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 const InputField = ({ type, placeholder, name, handleChange, address }) => (
   <input
@@ -41,13 +41,20 @@ function AddAddress() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'day') {
-      setDay(value);
-      setAddress(prev => ({ ...prev, street: '' }));
+
+    if (name === "street") {
+      setAddress(prev => ({
+        ...prev,
+        street: value
+      }));
+
+      // Auto-set day from selected street
+      setDay(streetToDay[value]);
     } else {
       setAddress(prev => ({ ...prev, [name]: value }));
     }
   };
+
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -80,30 +87,40 @@ function AddAddress() {
     }));
   }, []);
 
-  const dayOptions = [
-    { value: 'Sunday', label: '1 - Sunday' },
-    { value: 'Monday', label: '2 - Monday' },
-    { value: 'Tuesday', label: '3 - Tuesday' },
-    { value: 'Wednesday', label: '4 - Wednesday' },
-    { value: 'Thursday', label: '5 - Thursday' },
+  const streetToDay = {
+    Pandrakhali: "Sunday",
+    Padia: "Sunday",
+    Nuagaon: "Sunday",
+    Adhaibara: "Sunday",
+    Gotipur: "Sunday",
+    Jhadabai: "Sunday",
+    Gaganapur: "Sunday",
+
+    "Task 1": "Monday",
+    "Task 2": "Monday",
+
+    "Zone A": "Tuesday",
+    "Zone B": "Tuesday",
+  };
+
+  const streetOptions = [
+    // Sunday
+    { value: "Pandrakhali", label: "Pandrakhali" },
+    { value: "Padia", label: "Padia" },
+    { value: "Nuagaon", label: "Nuagaon" },
+    { value: "Adhaibara", label: "Adhaibara" },
+    { value: "Gotipur", label: "Gotipur" },
+    { value: "Jhadabai", label: "Jhadabai" },
+    { value: "Gaganapur", label: "Gaganapur" },
+
+
+    { value: "Task 1", label: "Task 1" },
+    { value: "Task 2", label: "Task 2" },
+    { value: "Zone A", label: "Zone A" },
+    { value: "Zone B", label: "Zone B" }
   ];
 
-  const subDayOptions = {
-    Sunday: [
-      { value: 'Bhimpur', label: 'Bhimpur' },
-      { value: 'Aska', label: 'Aska' },
-      { value: 'Brahmapur', label: 'Brahmapur' },
-      { value: 'Purushotampur', label: 'Purushotampur' },
-    ],
-    Monday: [
-      { value: 'Task 1', label: 'Task 1' },
-      { value: 'Task 2', label: 'Task 2' },
-    ],
-    Tuesday: [
-      { value: 'Zone A', label: 'Zone A' },
-      { value: 'Zone B', label: 'Zone B' },
-    ],
-  };
+
 
   return (
     <div className='mt-16 pb-16 px-4 md:px-16'>
@@ -117,22 +134,12 @@ function AddAddress() {
             <InputField handleChange={handleChange} address={address} name='name' type='text' placeholder='Name *' />
 
             <DropdownField
-              name='day'
-              options={dayOptions}
+              name='street'
+              options={streetOptions}
               handleChange={handleChange}
-              value={day}
-              placeholder="Select Day *"
+              value={address.street}
+              placeholder="Select Location *"
             />
-
-            {day && (
-              <DropdownField
-                name='street'
-                options={subDayOptions[day] || []}
-                handleChange={handleChange}
-                value={address.street}
-                placeholder="Select Location"
-              />
-            )}
 
             <InputField
                 handleChange={handleChange}

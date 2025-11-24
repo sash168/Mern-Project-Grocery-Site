@@ -25,7 +25,7 @@ function Categories() {
               alt={category.text}
               className="group-hover:scale-110 transition-transform duration-300 w-16 sm:w-20 md:w-24"
             />
-            <p className="text-xs sm:text-sm font-medium mt-2 text-gray-700">
+            <p className="text-xs sm:text-sm font-medium mt-2 text-gray-700 truncate text-center w-full">
               {category.text}
             </p>
           </div>

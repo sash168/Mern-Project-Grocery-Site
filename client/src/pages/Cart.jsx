@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useAppContext } from "../context/AppContext";
-import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner"; // or "@/components/ui/use-toast"
 
-const CartItem = ({ product, cartItems, updateCartItem, removeFromCart, navigate, currency }) => (
+
+const CartItem = ({ product, cartItems, updateCartItem, deleteItemFromCart, navigate, currency }) => (
   <div className="flex flex-col sm:flex-row md:grid md:grid-cols-[2fr_1fr_1fr] items-center gap-4 md:gap-0 p-4 bg-white rounded-lg shadow-sm">
     <div className="flex items-center gap-4 w-full md:flex-none cursor-pointer">
       <div
@@ -22,28 +24,35 @@ const CartItem = ({ product, cartItems, updateCartItem, removeFromCart, navigate
         <p className="text-gray-500 text-sm">Size: {product.weight || "N/A"}</p>
 
         {product.stock > 0 ? (
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-sm">Qty:</p>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-gray-600">Qty:</span>
+
+            <div className="flex items-center justify-between border rounded-lg w-14 bg-white shadow-sm select-none">
               <button
                 onClick={() =>
                   updateCartItem(product._id, Math.max(1, cartItems[product._id] - 1))
                 }
-                className="text-lg font-semibold px-2"
+                className="w-8 h-8 flex items-center justify-center text-lg font-semibold"
               >
                 –
               </button>
-              <span className="text-sm">{cartItems[product._id]}</span>
+
+              <span className="w-8 h-8 flex items-center justify-center text-sm font-medium">
+                {cartItems[product._id]}
+              </span>
+
               <button
                 onClick={() =>
                   updateCartItem(product._id, Math.min(product.stock, cartItems[product._id] + 1))
                 }
-                className="text-lg font-semibold px-2"
+                className="w-8 h-8 flex items-center justify-center text-lg font-semibold"
               >
                 +
               </button>
             </div>
           </div>
+
+
         ) : (
           <p className="text-red-500 text-sm mt-1">Out of stock</p>
         )}
@@ -56,7 +65,7 @@ const CartItem = ({ product, cartItems, updateCartItem, removeFromCart, navigate
 
     <div className="flex justify-center md:justify-start">
       <button
-        onClick={() => removeFromCart(product._id)}
+        onClick={() => deleteItemFromCart(product._id)}
         className="hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition"
         title="Remove item"
       >
@@ -73,6 +82,7 @@ const Cart = () => {
     products,
     cartItems,
     removeFromCart,
+    deleteItemFromCart,
     getCardAmount,
     getCardCount,
     updateCartItem,
@@ -186,6 +196,7 @@ const Cart = () => {
             cartItems={cartItems}
             updateCartItem={updateCartItem}
             removeFromCart={removeFromCart}
+            deleteItemFromCart={deleteItemFromCart}
             navigate={navigate}
             currency={currency}
           />

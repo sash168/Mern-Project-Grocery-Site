@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 function ProductList() {
   const { products, currency, axios, fetchProducts, navigate } = useAppContext();
+  const [searchTerm, setSearchTerm] = React.useState("");
+
 
   const toggleStock = async (id, inStock) => {
     try {
@@ -81,6 +83,16 @@ function ProductList() {
     <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll flex flex-col justify-between">
       <div className="w-full p-4 sm:p-6 md:p-10">
         <h2 className="pb-4 text-lg sm:text-xl font-semibold">All Products</h2>
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
+
 
         <div className="w-full">
           <table className="w-full border border-gray-300 bg-white rounded-lg overflow-hidden text-gray-700">
@@ -96,7 +108,12 @@ function ProductList() {
             </thead>
 
             <tbody className="text-sm sm:text-base">
-              {products.map((product) => (
+              {products
+                .filter((p) =>
+                  p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  p.category.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((product) => (
                 <tr
                   key={product._id}
                   className="border-t border-gray-200 hover:bg-gray-50 transition-all"

@@ -32,12 +32,15 @@ export const placeOrderCOD = async (req, res) => {
     const unpaidOrders = await Order.find({ userId, dueAmount: { $gt: 0 } });
     const prevDue = unpaidOrders.reduce((acc, o) => {
       const due = Number(o.dueAmount ?? (o.amount - (o.paidAmount || 0)));
+      console.log("Calculating due amount:", due);
       return acc + (isNaN(due) ? 0 : due);
     }, 0);
 
-    const totalDue = amount;
+    console.log("Previous due amount ", unpaidOrders, "is:", prevDue);
 
-    await Order.create({
+    const totalDue = prevDue + amount;
+
+    const order = await Order.create({
       userId,
       items,
       amount,
@@ -45,8 +48,10 @@ export const placeOrderCOD = async (req, res) => {
       paymentType: 'COD',
       paidAmount: 0,
       dueAmount: totalDue,
+      carriedFromPrevious: prevDue,   // <--- ADD THIS
       paymentStatus: `Due ₹${totalDue}`,
     });
+
 
     console.log("Creating order with amount:", amount, "carriedFromPrevious:", prevDue);
 
@@ -96,7 +101,7 @@ export const placeOrderStripe = async (req, res) => {
       return acc + (isNaN(due) ? 0 : due);
     }, 0);
 
-    const totalDue = amount + prevDue;
+    const totalDue = prevDue + amount;
 
     const order = await Order.create({
       userId,
@@ -106,8 +111,10 @@ export const placeOrderStripe = async (req, res) => {
       paymentType: 'Online',
       paidAmount: 0,
       dueAmount: totalDue,
+      carriedFromPrevious: prevDue,   // <--- ADD THIS
       paymentStatus: `Due ₹${totalDue}`,
     });
+
 
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -218,8 +225,8 @@ export const getUserOrders = async (req, res) => {
 export const getAllOrders = async (req, res) => {
     try {
         const orders = await Order.find({
-            $or: [{ paymentType: "COD" }, { isPaid: true }]
-        }).populate("items.product address").sort({ createdAt: -1 })
+        }).populate("items.product address")
+          .sort({ createdAt: -1 })
         
         return res.json({success:true, orders})
         
@@ -279,6 +286,26 @@ export const updatePayment = async (req, res) => {
 
       await ord.save();
     }
+
+    // 🔄 Recalculate all orders after payment
+    const allOrders = await Order.find({ userId }).sort({ createdAt: 1 });
+
+    let runningDue = 0;
+
+    for (const ord of allOrders) {
+      const total = Number(ord.amount || 0);
+      const paid = Number(ord.paidAmount || 0);
+      const remaining = Math.max(0, total - paid);
+
+      ord.dueAmount = remaining;
+      ord.carriedFromPrevious = runningDue;
+      ord.paymentStatus = remaining === 0 ? "Fully Paid" : `Due ₹${remaining}`;
+
+      runningDue += remaining;
+
+      await ord.save();
+    }
+
 
     return res.json({
       success: true,

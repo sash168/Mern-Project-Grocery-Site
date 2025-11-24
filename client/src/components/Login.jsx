@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 const Login = () => {
   const { setShowUserLogin, axios, navigate, setUser } = useAppContext();

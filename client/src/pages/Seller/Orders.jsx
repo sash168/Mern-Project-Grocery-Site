@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { printInvoice } from '../InvoiceHelper';
 
 function Orders() {
@@ -12,7 +12,9 @@ function Orders() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [paidInputs, setPaidInputs] = useState({}); // key: order._id -> string/number
-
+  const [searchName, setSearchName] = useState('');
+  const [filterDelivery, setFilterDelivery] = useState('all'); // all | delivered | pending
+  const [filterPayment, setFilterPayment] = useState('all'); // all | unpaid | paid
 
   const fetchOrders = async () => {
     try {
@@ -58,15 +60,55 @@ function Orders() {
         return orderDate >= start && orderDate <= end;
       });
     }
+    // 🔍 Filter by Customer Name
+    if (searchName.trim() !== '') {
+      filtered = filtered.filter(order => {
+        const name = order.address?.name?.toLowerCase() || '';
+        return name.includes(searchName.toLowerCase());
+      });
+    }
+
+    // 🚚 Delivery Filter
+    if (filterDelivery === 'delivered') {
+      filtered = filtered.filter(order => order.deliveryStatus === 'Delivered');
+    } else if (filterDelivery === 'pending') {
+      filtered = filtered.filter(order => order.deliveryStatus !== 'Delivered');
+    }
+
+    // 💰 Payment Filter
+    if (filterPayment === 'unpaid') {
+      filtered = filtered.filter(order => {
+        const due = Number(order.dueAmount ?? (order.amount - (order.paidAmount || 0)));
+        return due > 0;
+      });
+    } else if (filterPayment === 'paid') {
+      filtered = filtered.filter(order => {
+        const due = Number(order.dueAmount ?? (order.amount - (order.paidAmount || 0)));
+        return due <= 0;
+      });
+    }
+
     setFilteredOrders(filtered);
-  }, [filterType, startDate, endDate, orders]);
+  }, [
+    filterType,
+    startDate,
+    endDate,
+    orders,
+    searchName,
+    filterDelivery,
+    filterPayment
+  ]);
 
   const resetFilters = () => {
     setFilterType('all');
     setStartDate('');
     setEndDate('');
+    setSearchName('');
+    setFilterDelivery('all');
+    setFilterPayment('all');
     setFilteredOrders(orders);
   };
+
 
   const handlePaidAmount = async (order, paidAmountInput) => {
     const add = Number(paidAmountInput);
@@ -169,6 +211,39 @@ function Orders() {
           </button>
         </div>
 
+        {/* 🔍 Search + Additional Filters */}
+        {/* 🔍 Search by Name */}
+        <input
+          type="text"
+          placeholder="Search customer"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+          className="px-2 py-1 border rounded"
+        />
+
+        {/* 🚚 Delivery filter */}
+        <select
+          value={filterDelivery}
+          onChange={(e) => setFilterDelivery(e.target.value)}
+          className="px-3 py-1 border rounded"
+        >
+          <option value="all">All Deliveries</option>
+          <option value="delivered">Delivered</option>
+          <option value="pending">Pending</option>
+        </select>
+
+        {/* 💰 Payment filter */}
+        <select
+          value={filterPayment}
+          onChange={(e) => setFilterPayment(e.target.value)}
+          className="px-3 py-1 border rounded"
+        >
+          <option value="all">All Payments</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="paid">Fully Paid</option>
+        </select>
+
+
         {filteredOrders.map((order, index) => (
           <div
             key={index}
@@ -191,7 +266,7 @@ function Orders() {
                       scrollTo(0, 0);
                     }}
                   >
-                    {item.product?.name || 'Deleted Product'} x {item.quantity}
+                    {item.product?.name || 'Deleted Product'} x {item.quantity} x {currency}{item.product?.offerPrice * item.quantity}
                   </p>
                 ))}
               </div>
@@ -251,6 +326,7 @@ function Orders() {
                   {order.paymentStatus || 'Pending'}
                 </span>
               </p>
+
 
               {/* 💵 Paid Amount Input */}
               {order.paymentStatus !== 'Fully Paid' && (

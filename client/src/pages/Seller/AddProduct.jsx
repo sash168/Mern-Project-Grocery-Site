@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { assets, categories } from "../../assets/assets";
 import { useAppContext } from '../../context/AppContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 function AddProduct() {
   const { axios, fetchProducts } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
   const productToEditId = location.state?.productToEdit?._id;
-
-  console.log("Editing product ID:", productToEditId);
 
   const [files, setFiles] = useState([]);
   const [name, setName] = useState('');

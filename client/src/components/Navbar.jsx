@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import { useAppContext } from '../context/AppContext';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);

@@ -100,6 +100,7 @@ app.use('/api-docs',swaggerUi.serve,swaggerUi.setup(specs,{
 
 app.get('/docs', (req, res) => res.redirect('/api-docs'));
 
+
 app.listen(port, '0.0.0.0', ()=>{
     console.log(`Server is running on http://0.0.0.0:${port}`);
     console.log(`Local access: http://localhost:${port}`);

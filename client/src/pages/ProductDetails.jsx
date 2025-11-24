@@ -3,9 +3,10 @@ import { useAppContext } from "../context/AppContext";
 import { Link, useParams } from "react-router-dom";
 import { assets } from "../assets/assets";
 import ProductCard from "../components/ProductCard";
+import { toast } from "sonner";
 
 const ProductDetails = () => {
-  const { products, navigate, currency, addToCart, removeFromCart, cartItems } = useAppContext();
+  const { products, navigate, currency, addToCart, removeFromCart, updateCartItem, cartItems, fetchProducts } = useAppContext();
   const { id } = useParams();
 
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -14,13 +15,22 @@ const ProductDetails = () => {
   const product = products.find((item) => item._id == id);
 
   useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
     if (products.length > 0 && product) {
       const related = products.filter(
-        (item) => item.category === product.category && item._id !== product._id
+        (item) =>
+          item.category === product.category &&
+          item._id !== product._id &&
+          item.inStock &&
+          item.quantity > 0
       );
       setRelatedProducts(related.slice(0, 5));
     }
   }, [products, product]);
+
 
   useEffect(() => {
     setThumbnail(product?.image[0] || null);
@@ -37,7 +47,7 @@ const ProductDetails = () => {
       <p className="text-sm text-gray-500">
         <Link to="/">Home</Link> /
         <Link to="/products"> Products</Link> /
-        <Link to={`/product/${product.category.toLowerCase()}`}> {product.category}</Link> /
+        <Link to={`/products/${product.category.toLowerCase()}`}> {product.category}</Link> /
         <span className="text-primary"> {product.name}</span>
       </p>
 
@@ -140,24 +150,41 @@ const ProductDetails = () => {
             </button>
           ) : (
             <div className="flex items-center justify-center gap-6 w-full py-3 bg-primary/10 rounded select-none">
-              <button
-                onClick={() => removeFromCart(product._id)}
-                className="text-xl px-4 py-1 bg-white rounded border border-primary hover:bg-primary/10 transition"
-              >
-                -
-              </button>
 
-              <span className="text-lg font-medium min-w-[24px] text-center">
-                {cartItems[product._id]}
-              </span>
+            <button
+              onClick={() => {
+                const qty = cartItems[product._id];
+                if (qty > 1) {
+                  updateCartItem(product._id, qty - 1);
+                } else {
+                  removeFromCart(product._id);
+                }
+              }}
+              className="text-xl px-4 py-1 bg-white rounded border border-primary hover:bg-primary/10 transition"
+            >
+              -
+            </button>
 
-              <button
-                onClick={() => addToCart(product._id)}
-                className="text-xl px-4 py-1 bg-white rounded border border-primary hover:bg-primary/10 transition"
-              >
-                +
-              </button>
-            </div>
+            <span className="text-lg font-medium min-w-[24px] text-center">
+              {cartItems[product._id]}
+            </span>
+
+            <button
+              onClick={() => {
+                const qty = cartItems[product._id] || 0;
+                if (qty < product.quantity) {
+                  addToCart(product._id);
+                } else {
+                  toast.error(`Only ${product.quantity} units available`);
+                }
+              }}
+              className="text-xl px-4 py-1 bg-white rounded border border-primary hover:bg-primary/10 transition"
+            >
+              +
+            </button>
+
+          </div>
+
 
           )}
 

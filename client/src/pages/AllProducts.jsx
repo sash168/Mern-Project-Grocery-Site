@@ -7,16 +7,19 @@ function AllProducts() {
     const [filteredProduct, setFilteredProduct] = useState([]);
 
     useEffect(() => {
+        const inStockProducts = products.filter(p => p.inStock);
+
         if (searchQuery.length > 0) {
             setFilteredProduct(
-                products.filter(product => 
+                inStockProducts.filter(product =>
                     product.name.toLowerCase().includes(searchQuery.toLowerCase())
                 )
             );
         } else {
-            setFilteredProduct(products);
+            setFilteredProduct(inStockProducts);
         }
     }, [products, searchQuery]);
+
 
     return (
         <div className="mt-20 px-3 sm:px-6 md:px-16">
