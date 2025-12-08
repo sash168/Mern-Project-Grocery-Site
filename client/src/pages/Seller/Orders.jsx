@@ -15,6 +15,7 @@ function Orders() {
   const [searchName, setSearchName] = useState('');
   const [filterDelivery, setFilterDelivery] = useState('all'); // all | delivered | pending
   const [filterPayment, setFilterPayment] = useState('all'); // all | unpaid | paid
+  const [loadingDelivery, setLoadingDelivery] = useState({});
 
   const fetchOrders = async () => {
     try {
@@ -115,7 +116,7 @@ function Orders() {
     const total = Number(order.amount);
 
     const currentPaid = Number(order.paidAmount ?? 0);
-    const currentDue = Number(order.dueAmount ?? 0);
+    const currentDue = (order.amount + (order.carriedFromPrevious || 0)) - (order.paidAmount || 0);
 
     if (isNaN(add) || add <= 0) {
       toast.error('Please enter a valid paid amount (greater than 0)');
@@ -151,9 +152,9 @@ function Orders() {
     }
   };
 
-
-  // ✅ Handle Delivery Status
   const handleDeliveryStatus = async (orderId, status) => {
+    if (loadingDelivery[orderId]) return; // prevent double clicks
+    setLoadingDelivery(prev => ({ ...prev, [orderId]: true }));
     try {
       const { data } = await axios.put(`/api/order/updateDelivery/${orderId}`, {
         deliveryStatus: status
@@ -161,11 +162,17 @@ function Orders() {
       if (data.success) {
         toast.success('Delivery status updated!');
         fetchOrders();
+      } else {
+        toast.error(data.message || 'Failed to update delivery status');
       }
-    } catch {
+    } catch (err) {
       toast.error('Failed to update delivery status');
+      console.error(err);
+    } finally {
+      setLoadingDelivery(prev => ({ ...prev, [orderId]: false }));
     }
   };
+
 
   return (
     <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll">
@@ -335,7 +342,10 @@ function Orders() {
                     type="number"
                     min="0"
                     // limit max to current remaining due
-                    max={ (order.dueAmount ?? (order.amount - (order.paidAmount || 0))) || order.amount }
+                    max={
+                      (order.amount + (order.carriedFromPrevious || 0)) 
+                      - (order.paidAmount || 0)
+                    }
                     placeholder="Paid ₹"
                     className="border p-1 rounded w-24"
                     value={paidInputs[order._id] ?? ''}
@@ -381,9 +391,10 @@ function Orders() {
               {order.deliveryStatus !== 'Delivered' && (
                 <button
                   onClick={() => handleDeliveryStatus(order._id, 'Delivered')}
+                  disabled={loadingDelivery[order._id]}
                   className="text-xs px-2 py-1 bg-blue-500 rounded text-white hover:bg-blue-600"
                 >
-                  Mark Delivered
+                  {loadingDelivery[order._id] ? 'Processing...' : 'Mark Delivered'}
                 </button>
               )}
 

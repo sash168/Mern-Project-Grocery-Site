@@ -138,16 +138,20 @@ export const printInvoice = async (order, currency, user, axios, orderIndex = 1,
     </html>
   `;
 
-  // const iframe = document.createElement('iframe');
-  // iframe.style.display = 'none';
-  // document.body.appendChild(iframe);
-  // const doc = iframe.contentWindow.document;
-  // doc.open();
-  // doc.write(html);
-  // doc.close();
-  // iframe.contentWindow.focus();
-  // iframe.contentWindow.print();
-  // document.body.removeChild(iframe);
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
+
+  document.body.removeChild(iframe);
+
 
   // Send print job to backend after browser print
   if (axios) await sendPrintJobToBackend(order, axios);

@@ -1,0 +1,3 @@
+{
+  "exclude": ["**/build/**", "**/.gradle/**", "**/build/generated/**"]
+}

@@ -96,6 +96,7 @@ const Cart = () => {
   const [cartArray, setCartArray] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const addressRef = useRef(null);
 
@@ -141,43 +142,59 @@ const Cart = () => {
   }, []);
 
   const placeOrder = async () => {
+    if (isPlacingOrder) return;   // Prevent double click
+    setIsPlacingOrder(true);
+
     if (!user) {
       toast.error("Please login to place an order");
       navigate("/login");
+      setIsPlacingOrder(false);
       return;
     }
 
     if (!selectedAddress?._id) {
       toast.error("Please add/select an address");
       navigate("/add-address");
+      setIsPlacingOrder(false);
       return;
     }
 
     try {
       const { data } = await axios.post("/api/order/cod", {
         userId: user._id,
-        items: cartArray.map((item) => ({ product: item._id, quantity: item.quantity })),
+        items: cartArray.map((item) => ({
+          product: item._id,
+          quantity: item.quantity,
+        })),
         address: selectedAddress._id,
       });
 
       if (data.success) {
         toast.success(data.message);
-
+        
         const updatedProducts = products.map((product) => {
           const orderedItem = cartArray.find((item) => item._id === product._id);
           if (orderedItem)
-            return { ...product, quantity: product.quantity - orderedItem.quantity };
+            return {
+              ...product,
+              quantity: product.quantity - orderedItem.quantity,
+            };
           return product;
         });
 
         setCartItems({});
         setProducts(updatedProducts);
         navigate("/my-orders");
-      } else toast.error(data.message);
+      } else {
+        toast.error(data.message);
+      }
     } catch (error) {
       toast.error(error.message);
     }
+
+    setIsPlacingOrder(false);
   };
+
 
   if (!products.length || !cartItems) return null;
 
@@ -320,13 +337,14 @@ const Cart = () => {
 
         <button
           onClick={placeOrder}
+          disabled={!user || !selectedAddress || isPlacingOrder}
           className={`w-full py-3 mt-4 rounded font-medium transition ${
-            !user || !selectedAddress
+            !user || !selectedAddress || isPlacingOrder
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-primary text-white hover:bg-dull-primary"
           }`}
         >
-          Place Order
+          {isPlacingOrder ? "Processing..." : "Place Order"}
         </button>
       </div>
     </div>

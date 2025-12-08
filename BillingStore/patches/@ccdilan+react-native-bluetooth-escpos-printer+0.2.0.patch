@@ -1,0 +1,90 @@
+diff --git a/node_modules/@ccdilan/react-native-bluetooth-escpos-printer/android/build.gradle b/node_modules/@ccdilan/react-native-bluetooth-escpos-printer/android/build.gradle
+index 5b5f82a..dc63fdf 100644
+--- a/node_modules/@ccdilan/react-native-bluetooth-escpos-printer/android/build.gradle
++++ b/node_modules/@ccdilan/react-native-bluetooth-escpos-printer/android/build.gradle
+@@ -1,37 +1,31 @@
+ buildscript {
+     repositories {
+-        jcenter { url "https://jcenter.bintray.com/" }
+-        maven {url "https://repo.spring.io/plugins-release/"}
++        google()
+         mavenCentral()
+-        maven {
+-            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+-            url "$rootDir/../node_modules/react-native/android"
+-        }
+-        maven {
+-            url 'https://maven.google.com'
+-        }
+     }
+ 
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:3.1.4'
++        // Must match your main project AGP
++        classpath 'com.android.tools.build:gradle:8.0.2'
+     }
+ }
+ 
+ apply plugin: 'com.android.library'
+ 
+ android {
+-    compileSdkVersion 30
+-    buildToolsVersion "28.0.3"
++    namespace "com.ccdilan.bluetoothescposprinter"
++
++    compileSdkVersion 35
+ 
+     defaultConfig {
+-        minSdkVersion 16
+-        targetSdkVersion 30
+-        versionCode 1
+-        versionName "1.0"
++        minSdkVersion 24
++        targetSdkVersion 35
+     }
+-    lintOptions {
++
++    lint {
+         abortOnError false
+     }
++
+     sourceSets {
+         main {
+             aidl.srcDirs = ['src/main/java']
+@@ -41,21 +35,15 @@ android {
+ 
+ repositories {
+     google()
+-    jcenter { url "https://jcenter.bintray.com/" }
+-    maven {url "https://repo.spring.io/plugins-release/"}
+     mavenCentral()
+     maven {
+-        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+         url "$rootDir/../node_modules/react-native/android"
+     }
+-    maven {
+-        url 'https://maven.google.com'
+-    }
+ }
+ 
+ dependencies {
+-    implementation 'com.facebook.react:react-native:+'  // From node_modules
+-    implementation "androidx.appcompat:appcompat:1.4.2"
+-    implementation "androidx.core:core:1.10.1"
++    implementation 'com.facebook.react:react-android'
++    implementation "androidx.appcompat:appcompat:1.6.1"
++    implementation "androidx.core:core-ktx:1.12.0"
+     implementation "com.google.zxing:core:3.3.0"
+ }
+diff --git a/node_modules/@ccdilan/react-native-bluetooth-escpos-printer/android/src/main/AndroidManifest.xml b/node_modules/@ccdilan/react-native-bluetooth-escpos-printer/android/src/main/AndroidManifest.xml
+index b646487..b113b6b 100644
+--- a/node_modules/@ccdilan/react-native-bluetooth-escpos-printer/android/src/main/AndroidManifest.xml
++++ b/node_modules/@ccdilan/react-native-bluetooth-escpos-printer/android/src/main/AndroidManifest.xml
+@@ -1,6 +1,5 @@
+ 
+-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+-          package="cn.jystudio.bluetooth">
++<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+     <uses-permission android:name="android.permission.BLUETOOTH" />
+     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>

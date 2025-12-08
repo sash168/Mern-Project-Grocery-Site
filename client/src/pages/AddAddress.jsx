@@ -89,10 +89,10 @@ function AddAddress() {
 
   const streetToDay = {
     Pandrakhali: "Sunday",
-    Padia: "Sunday",
+    Pandia: "Sunday",
     Nuagaon: "Sunday",
     Adhaibara: "Sunday",
-    Gotipur: "Sunday",
+    Gotopur: "Sunday",
     Jhadabai: "Sunday",
     Gaganapur: "Sunday",
 
@@ -106,10 +106,10 @@ function AddAddress() {
   const streetOptions = [
     // Sunday
     { value: "Pandrakhali", label: "Pandrakhali" },
-    { value: "Padia", label: "Padia" },
+    { value: "Pandia", label: "Pandia" },
     { value: "Nuagaon", label: "Nuagaon" },
     { value: "Adhaibara", label: "Adhaibara" },
-    { value: "Gotipur", label: "Gotipur" },
+    { value: "Gotopur", label: "Gotopur" },
     { value: "Jhadabai", label: "Jhadabai" },
     { value: "Gaganapur", label: "Gaganapur" },
 

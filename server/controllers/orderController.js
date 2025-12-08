@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import stripe from 'stripe';
 import mongoose from 'mongoose';
 import Address from '../models/Address.js';
+import { sendDeliverySMS } from './smsController.js';
 
 export const placeOrderCOD = async (req, res) => {
   try {
@@ -326,15 +327,37 @@ export const updateDelivery = async (req, res) => {
     const { id } = req.params;
     const { deliveryStatus } = req.body;
 
-    const order = await Order.findById(id);
+    const order = await Order.findById(id).populate("address").populate("items.product");
     if (!order) return res.json({ success: false, message: "Order not found" });
 
+    const prevStatus = order.deliveryStatus;
     order.deliveryStatus = deliveryStatus;
     await order.save();
 
-    res.json({ success: true, message: "Delivery status updated successfully" });
+    // If changed to Delivered and previously wasn't Delivered, trigger SMS
+    if (deliveryStatus === "Delivered" && prevStatus !== "Delivered") {
+      // Build phone in E.164 format: assume Indian numbers stored as 10-digit
+      const rawPhone = order.address?.phone || order.phone || order.userPhone;
+      console.log("Preparing to send delivery SMS to phone:", rawPhone , "for order:", order.address?.phone, "order", order);
+      const phone = rawPhone
+        ? rawPhone.startsWith("+") ? rawPhone : `+91${rawPhone.replace(/\D/g,'')}`
+        : null;
+
+      // fire-and-forget (do not block response). Use a worker in production.
+      (async () => {
+        try {
+          const result = await sendDeliverySMS({ order, phone });
+          console.log("Delivery SMS send result:", result);
+        } catch (err) {
+          console.error("Failed to send delivery SMS:", err);
+        }
+      })();
+    }
+
+    return res.json({ success: true, message: "Delivery updated", order });
   } catch (e) {
-    res.json({ success: false, message: "Error updating delivery: " + e.message });
+    console.error("updateDelivery error:", e);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
