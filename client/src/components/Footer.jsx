@@ -23,10 +23,10 @@ export default function Footer() {
           </div> */}
 
         {/* Contact Details */}
-        <div className="flex flex-col items-center text-gray-600 text-sm mt-2 gap-1">
+        {/* <div className="flex flex-col items-center text-gray-600 text-sm mt-2 gap-1">
           <p>Call: +91 9137127558</p>
           <p>Address: Bada Danda sahi, Bhimpur, Ganjam, Odissa - 761043, India</p>
-        </div>
+        </div> */}
 
         {/* Copyright */}
         <p className="text-sm text-gray-600 text-center mt-2 w-full">
