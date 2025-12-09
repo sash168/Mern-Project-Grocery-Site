@@ -154,24 +154,33 @@ export const printInvoice = async (
   // -------------------------------
 
   const iframe = document.createElement("iframe");
-  iframe.style.display = "none";
-  document.body.appendChild(iframe);
+iframe.style.position = "fixed";
+iframe.style.right = "0";
+iframe.style.bottom = "0";
+iframe.style.width = "0";
+iframe.style.height = "0";
+iframe.style.border = "0";
+document.body.appendChild(iframe);
 
-  // FIX: wait for iframe to load BEFORE printing
-  iframe.onload = () => {
+const doc = iframe.contentWindow.document;
+doc.open();
+doc.write(html);
+doc.close();
+
+// ⭐ ANDROID CHROME FIX ⭐
+// Wait for HTML to be ready before printing
+setTimeout(() => {
+  try {
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
+  } catch (err) {
+    console.error("Mobile print failed:", err);
+  }
 
-    // remove iframe after printing
-    setTimeout(() => document.body.removeChild(iframe), 100);
-  };
+  // Clean up after printing
+  setTimeout(() => document.body.removeChild(iframe), 500);
 
-  // FIX: write AFTER attaching load listener
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
-
+}, 150); // ← THIS DELAY IS REQUIRED FOR ANDROID
   // Send print job to backend after browser print
   if (axios) await sendPrintJobToBackend(order, axios);
 };
