@@ -158,22 +158,22 @@ export const printInvoice = async (order, currency, user, axios, orderIndex = 1,
   if (axios) await sendPrintJobToBackend(order, axios);
 };
 
-export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
+export const printThermalMobileSafe = (order, companyName = "S3 Retail Hub", serial = 1) => {
 
-  // STEP 1 — Calculate dynamic height
-  const baseHeight = 60; // minimum bill height
+  // Calculate height
+  const baseHeight = 60;
   const itemHeight = order.items.length * 6;
   const totalHeight = Math.max(baseHeight + itemHeight, 100);
 
   const doc = new jsPDF({
     orientation: "p",
     unit: "mm",
-    format: [58, totalHeight] // 58mm width, height auto
+    format: [58, totalHeight]
   });
 
   let y = 6;
 
-  // ---------------- HEADER ----------------
+  // Header
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(12);
   doc.text(companyName, 29, y, { align: "center" });
@@ -189,10 +189,10 @@ export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 
   const today = new Date(order.createdAt);
   const formattedDate = today.toLocaleDateString("en-IN");
 
-  // Invoice number format: YYYYMMDD-Serial
   const invoiceNum =
     `${today.getFullYear()}` +
-    `${String(today.getDate()).padStart(2, "0")}${serial}`;
+    `${String(today.getDate()).padStart(2, "0")}` +
+    `${serial}`;
 
   doc.text(`Date: ${formattedDate}`, 2, y); y += 4;
   doc.text(`Invoice No: ${invoiceNum}`, 2, y); y += 6;
@@ -200,7 +200,7 @@ export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 
   doc.line(2, y, 56, y);
   y += 5;
 
-  // ---------------- TABLE HEADER ----------------
+  // Table
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(9);
   doc.text("Item", 2, y);
@@ -211,7 +211,6 @@ export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 
   doc.line(2, y, 56, y);
   y += 4;
 
-  // ---------------- ITEMS ----------------
   doc.setFont("Helvetica", "normal");
   doc.setFontSize(8);
 
@@ -230,12 +229,8 @@ export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 
   doc.line(2, y, 56, y);
   y += 6;
 
-  // ---------------- TOTALS ----------------
   const totalQty = order.items.reduce((sum, i) => sum + i.quantity, 0);
-
-  doc.setFont("Helvetica", "normal");
   doc.text(`Total Qty: ${totalQty}`, 2, y); y += 4;
-
   doc.text(`Subtotal: Rs. ${order.amount}`, 2, y); y += 4;
 
   if (order.discount) {
@@ -243,26 +238,27 @@ export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 
     y += 4;
   }
 
-  // Bold Grand Total
   doc.setFont("Helvetica", "bold");
   doc.text(`Grand Total: Rs. ${order.finalAmount || order.amount}`, 2, y);
   y += 8;
 
-  // Footer
   doc.setFont("Helvetica", "normal");
   doc.setFontSize(8);
   doc.text("Thank you! Visit again", 29, y, { align: "center" });
 
-  // ---------------- SAVE + PRINT ----------------
+  // --- MOBILE SAFE PRINT ---
   const pdfBlob = doc.output("blob");
   const url = URL.createObjectURL(pdfBlob);
 
-  window.open(url); // open print dialog on Android
-
+  // Force download
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${invoiceNum}.pdf`;
+  a.download = `Invoice_${invoiceNum}.pdf`;
   a.click();
+
+  // Ask user to open file manually for print
+  alert("Invoice downloaded. Open the file to print using your Printer App.");
 };
+
 
 
