@@ -137,21 +137,39 @@ export const printInvoice = async (order, currency, user, axios, orderIndex = 1,
       </body>
     </html>
   `;
- // ⬇️ THIS PRINTS ONLY THE BILL — NOT THE PAGE
-  const iframe = document.createElement("iframe");
-  iframe.style.display = "none";
-  document.body.appendChild(iframe);
+  // -------------------------------
+// FIX FOR ANDROID + DESKTOP
+// -------------------------------
 
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
+const iframe = document.createElement("iframe");
+iframe.style.position = "fixed";
+iframe.style.right = "0";
+iframe.style.bottom = "0";
+iframe.style.width = "0";
+iframe.style.height = "0";
+iframe.style.border = "0";
+document.body.appendChild(iframe);
 
-  iframe.onload = () => {
+const doc = iframe.contentWindow.document;
+doc.open();
+doc.write(html);
+doc.close();
+
+// ⭐ ANDROID CHROME FIX ⭐
+// Wait for HTML to be ready before printing
+setTimeout(() => {
+  try {
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
-    document.body.removeChild(iframe);
-  };
+  } catch (err) {
+    console.error("Mobile print failed:", err);
+  }
+
+  // Clean up after printing
+  setTimeout(() => document.body.removeChild(iframe), 500);
+
+}, 150); // ← THIS DELAY IS REQUIRED FOR ANDROID
+
 
   // Send print job to backend after browser print
   if (axios) await sendPrintJobToBackend(order, axios);
