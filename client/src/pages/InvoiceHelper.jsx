@@ -137,9 +137,9 @@ export const printInvoice = async (order, currency, user, axios, orderIndex = 1,
       </body>
     </html>
   `;
-
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
+ // ⬇️ THIS PRINTS ONLY THE BILL — NOT THE PAGE
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
   document.body.appendChild(iframe);
 
   const doc = iframe.contentWindow.document;
@@ -147,10 +147,11 @@ export const printInvoice = async (order, currency, user, axios, orderIndex = 1,
   doc.write(html);
   doc.close();
 
-  iframe.contentWindow.focus();
-  iframe.contentWindow.print();
-
-  document.body.removeChild(iframe);
+  iframe.onload = () => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    document.body.removeChild(iframe);
+  };
 
 
   // Send print job to backend after browser print
