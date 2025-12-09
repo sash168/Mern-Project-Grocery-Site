@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import { toast } from 'sonner';
-import { printInvoice } from '../InvoiceHelper';
+import { printInvoice, printThermalBill } from '../InvoiceHelper';
 
 function Orders() {
   const { currency, axios, navigate, user } = useAppContext();
@@ -400,7 +400,8 @@ function Orders() {
 
               {/* 🖨 Print Invoice */}
               <button
-                onClick={() => printInvoice(order, currency, user, axios, index + 1)}
+                // onClick={() => printInvoice(order, currency, user, axios, index + 1)}
+                onClick={() => printThermalBill(order)}
                 className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
               >
                 Print Invoice

@@ -157,3 +157,112 @@ export const printInvoice = async (order, currency, user, axios, orderIndex = 1,
   // Send print job to backend after browser print
   if (axios) await sendPrintJobToBackend(order, axios);
 };
+
+export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
+
+  // STEP 1 — Calculate dynamic height
+  const baseHeight = 60; // minimum bill height
+  const itemHeight = order.items.length * 6;
+  const totalHeight = Math.max(baseHeight + itemHeight, 100);
+
+  const doc = new jsPDF({
+    orientation: "p",
+    unit: "mm",
+    format: [58, totalHeight] // 58mm width, height auto
+  });
+
+  let y = 6;
+
+  // ---------------- HEADER ----------------
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(companyName, 29, y, { align: "center" });
+  y += 6;
+
+  doc.setFontSize(10);
+  doc.text("INVOICE", 29, y, { align: "center" });
+  y += 6;
+
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(8);
+
+  const today = new Date(order.createdAt);
+  const formattedDate = today.toLocaleDateString("en-IN");
+
+  // Invoice number format: YYYYMMDD-Serial
+  const invoiceNum =
+    `${today.getFullYear()}` +
+    `${String(today.getDate()).padStart(2, "0")}${serial}`;
+
+  doc.text(`Date: ${formattedDate}`, 2, y); y += 4;
+  doc.text(`Invoice No: ${invoiceNum}`, 2, y); y += 6;
+
+  doc.line(2, y, 56, y);
+  y += 5;
+
+  // ---------------- TABLE HEADER ----------------
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("Item", 2, y);
+  doc.text("Qty", 28, y, { align: "right" });
+  doc.text("Amt", 56, y, { align: "right" });
+  y += 4;
+
+  doc.line(2, y, 56, y);
+  y += 4;
+
+  // ---------------- ITEMS ----------------
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(8);
+
+  order.items.forEach((item) => {
+    const name = item.product?.name || item.name;
+    const qty = item.quantity;
+    const price = item.product?.offerPrice || item.offerPrice || 0;
+    const total = qty * price;
+
+    doc.text(name.substring(0, 18), 2, y);
+    doc.text(String(qty), 28, y, { align: "right" });
+    doc.text(String(total), 56, y, { align: "right" });
+    y += 5;
+  });
+
+  doc.line(2, y, 56, y);
+  y += 6;
+
+  // ---------------- TOTALS ----------------
+  const totalQty = order.items.reduce((sum, i) => sum + i.quantity, 0);
+
+  doc.setFont("Helvetica", "normal");
+  doc.text(`Total Qty: ${totalQty}`, 2, y); y += 4;
+
+  doc.text(`Subtotal: Rs. ${order.amount}`, 2, y); y += 4;
+
+  if (order.discount) {
+    doc.text(`Discount: Rs. ${order.discount}`, 2, y);
+    y += 4;
+  }
+
+  // Bold Grand Total
+  doc.setFont("Helvetica", "bold");
+  doc.text(`Grand Total: Rs. ${order.finalAmount || order.amount}`, 2, y);
+  y += 8;
+
+  // Footer
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(8);
+  doc.text("Thank you! Visit again", 29, y, { align: "center" });
+
+  // ---------------- SAVE + PRINT ----------------
+  const pdfBlob = doc.output("blob");
+  const url = URL.createObjectURL(pdfBlob);
+
+  window.open(url); // open print dialog on Android
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${invoiceNum}.pdf`;
+  a.click();
+};
+
+
