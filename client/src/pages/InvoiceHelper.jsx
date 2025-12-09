@@ -84,14 +84,7 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
 };
 
 // Print invoice in browser
-export const printInvoice = async (
-  order,
-  currency,
-  user,
-  axios,
-  orderIndex = 1,
-  companyName = "S3 Retail Hub"
-) => {
+export const printInvoice = async (order, currency, user, axios, orderIndex = 1, companyName = "BS Soda") => {
   if (!order) return;
 
   const now = new Date();
@@ -110,14 +103,14 @@ export const printInvoice = async (
       <head>
         <title>Invoice</title>
         <style>
-          @page { margin: 5mm; size: 58mm auto; }
-          body { font-family: Arial, sans-serif; padding: 8px; font-size: 15px; color: #1f2937; }
+          body { font-family: Arial, sans-serif; padding: 16px; font-size: 15px; color: #1f2937; }
           h2 { text-align: center; font-size: 22px; margin-bottom: 8px; font-weight: bold; }
           .company { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 4px; color: #111827; }
+          .header-info { margin-bottom: 12px; }
           .header-info p { margin: 2px 0; }
-          .totals { font-weight: bold; font-size: 17px; margin-top: 10px; display:flex; justify-content:space-between; border-top:5px solid #e2e8f0; }
+          .totals { font-weight: bold; font-size: 17px; margin-top: 10px; display:flex; justify-content:space-between; border-top:5px solid #e2e8f0;font-size:15px, margin-bottom: 10px;}
           .subtotal { font-size: 18px; font-weight: 700; margin-top: 4px; display:flex; justify-content:space-between; }
-          .thank-you { text-align: center; margin-top: 12px; font-size: 15px; font-weight:500; }
+          .thank-you { text-align: center; margin-top: 12px; font-size: 15px; color: #16a085; font-weight:500; }
         </style>
       </head>
       <body>
@@ -129,62 +122,40 @@ export const printInvoice = async (
           <p>Customer: ${order.customerName || user?.name || "Guest"}</p>
           <p>Contact: ${order.customerNumber || "N/A"}</p>
         </div>
-
-        <div style="border-top:5px solid #e2e8f0;">
+        <div style="border-top:5px solid #e2e8f0;font-size:15px">
           ${itemsHTML}
         </div>
-
         <div class="totals">
           <span>Total Quantity:</span>
-          <span>${order.items.reduce((s,i)=>s+i.quantity,0)}</span>
+          <span>${order.items.reduce((sum,i)=>sum+i.quantity,0)}</span>
         </div>
-
         <div class="subtotal">
           <span>Subtotal:</span>
           <span>${safeCurrency}${order.amount.toFixed(2)}</span>
         </div>
-
         <p class="thank-you">Thank you for shopping with us!</p>
       </body>
     </html>
   `;
-
-  // -------------------------------
-  // FIX: PRINT ONLY BILL (NOT PAGE)
-  // -------------------------------
-
+ // ⬇️ THIS PRINTS ONLY THE BILL — NOT THE PAGE
   const iframe = document.createElement("iframe");
-iframe.style.position = "fixed";
-iframe.style.right = "0";
-iframe.style.bottom = "0";
-iframe.style.width = "0";
-iframe.style.height = "0";
-iframe.style.border = "0";
-document.body.appendChild(iframe);
+  iframe.style.display = "none";
+  document.body.appendChild(iframe);
 
-const doc = iframe.contentWindow.document;
-doc.open();
-doc.write(html);
-doc.close();
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
 
-// ⭐ ANDROID CHROME FIX ⭐
-// Wait for HTML to be ready before printing
-setTimeout(() => {
-  try {
+  iframe.onload = () => {
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
-  } catch (err) {
-    console.error("Mobile print failed:", err);
-  }
+    document.body.removeChild(iframe);
+  };
 
-  // Clean up after printing
-  setTimeout(() => document.body.removeChild(iframe), 500);
-
-}, 150); // ← THIS DELAY IS REQUIRED FOR ANDROID
   // Send print job to backend after browser print
   if (axios) await sendPrintJobToBackend(order, axios);
 };
-
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
 
