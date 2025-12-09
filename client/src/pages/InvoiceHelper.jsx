@@ -84,7 +84,14 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
 };
 
 // Print invoice in browser
-export const printInvoice = async (order, currency, user, axios, orderIndex = 1, companyName = "BS Soda") => {
+export const printInvoice = async (
+  order,
+  currency,
+  user,
+  axios,
+  orderIndex = 1,
+  companyName = "S3 Retail Hub"
+) => {
   if (!order) return;
 
   const now = new Date();
@@ -103,14 +110,14 @@ export const printInvoice = async (order, currency, user, axios, orderIndex = 1,
       <head>
         <title>Invoice</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 16px; font-size: 15px; color: #1f2937; }
+          @page { margin: 5mm; size: 58mm auto; }
+          body { font-family: Arial, sans-serif; padding: 8px; font-size: 15px; color: #1f2937; }
           h2 { text-align: center; font-size: 22px; margin-bottom: 8px; font-weight: bold; }
           .company { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 4px; color: #111827; }
-          .header-info { margin-bottom: 12px; }
           .header-info p { margin: 2px 0; }
-          .totals { font-weight: bold; font-size: 17px; margin-top: 10px; display:flex; justify-content:space-between; border-top:5px solid #e2e8f0;font-size:15px, margin-bottom: 10px;}
+          .totals { font-weight: bold; font-size: 17px; margin-top: 10px; display:flex; justify-content:space-between; border-top:5px solid #e2e8f0; }
           .subtotal { font-size: 18px; font-weight: 700; margin-top: 4px; display:flex; justify-content:space-between; }
-          .thank-you { text-align: center; margin-top: 12px; font-size: 15px; color: #16a085; font-weight:500; }
+          .thank-you { text-align: center; margin-top: 12px; font-size: 15px; font-weight:500; }
         </style>
       </head>
       <body>
@@ -122,58 +129,70 @@ export const printInvoice = async (order, currency, user, axios, orderIndex = 1,
           <p>Customer: ${order.customerName || user?.name || "Guest"}</p>
           <p>Contact: ${order.customerNumber || "N/A"}</p>
         </div>
-        <div style="border-top:5px solid #e2e8f0;font-size:15px">
+
+        <div style="border-top:5px solid #e2e8f0;">
           ${itemsHTML}
         </div>
+
         <div class="totals">
           <span>Total Quantity:</span>
-          <span>${order.items.reduce((sum,i)=>sum+i.quantity,0)}</span>
+          <span>${order.items.reduce((s,i)=>s+i.quantity,0)}</span>
         </div>
+
         <div class="subtotal">
           <span>Subtotal:</span>
           <span>${safeCurrency}${order.amount.toFixed(2)}</span>
         </div>
+
         <p class="thank-you">Thank you for shopping with us!</p>
       </body>
     </html>
   `;
- // ⬇️ THIS PRINTS ONLY THE BILL — NOT THE PAGE
+
+  // -------------------------------
+  // FIX: PRINT ONLY BILL (NOT PAGE)
+  // -------------------------------
+
   const iframe = document.createElement("iframe");
   iframe.style.display = "none";
   document.body.appendChild(iframe);
 
+  // FIX: wait for iframe to load BEFORE printing
+  iframe.onload = () => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+
+    // remove iframe after printing
+    setTimeout(() => document.body.removeChild(iframe), 100);
+  };
+
+  // FIX: write AFTER attaching load listener
   const doc = iframe.contentWindow.document;
   doc.open();
   doc.write(html);
   doc.close();
 
-  iframe.onload = () => {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-    document.body.removeChild(iframe);
-  };
-
-
   // Send print job to backend after browser print
   if (axios) await sendPrintJobToBackend(order, axios);
 };
 
-export const printThermalMobileSafe = (order, companyName = "S3 Retail Hub", serial = 1) => {
 
-  // Calculate height
-  const baseHeight = 60;
+export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
+
+  // STEP 1 — Calculate dynamic height
+  const baseHeight = 60; // minimum bill height
   const itemHeight = order.items.length * 6;
   const totalHeight = Math.max(baseHeight + itemHeight, 100);
 
   const doc = new jsPDF({
     orientation: "p",
     unit: "mm",
-    format: [58, totalHeight]
+    format: [58, totalHeight] // 58mm width, height auto
   });
 
   let y = 6;
 
-  // Header
+  // ---------------- HEADER ----------------
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(12);
   doc.text(companyName, 29, y, { align: "center" });
@@ -189,10 +208,10 @@ export const printThermalMobileSafe = (order, companyName = "S3 Retail Hub", ser
   const today = new Date(order.createdAt);
   const formattedDate = today.toLocaleDateString("en-IN");
 
+  // Invoice number format: YYYYMMDD-Serial
   const invoiceNum =
     `${today.getFullYear()}` +
-    `${String(today.getDate()).padStart(2, "0")}` +
-    `${serial}`;
+    `${String(today.getDate()).padStart(2, "0")}${serial}`;
 
   doc.text(`Date: ${formattedDate}`, 2, y); y += 4;
   doc.text(`Invoice No: ${invoiceNum}`, 2, y); y += 6;
@@ -200,7 +219,7 @@ export const printThermalMobileSafe = (order, companyName = "S3 Retail Hub", ser
   doc.line(2, y, 56, y);
   y += 5;
 
-  // Table
+  // ---------------- TABLE HEADER ----------------
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(9);
   doc.text("Item", 2, y);
@@ -211,6 +230,7 @@ export const printThermalMobileSafe = (order, companyName = "S3 Retail Hub", ser
   doc.line(2, y, 56, y);
   y += 4;
 
+  // ---------------- ITEMS ----------------
   doc.setFont("Helvetica", "normal");
   doc.setFontSize(8);
 
@@ -229,8 +249,12 @@ export const printThermalMobileSafe = (order, companyName = "S3 Retail Hub", ser
   doc.line(2, y, 56, y);
   y += 6;
 
+  // ---------------- TOTALS ----------------
   const totalQty = order.items.reduce((sum, i) => sum + i.quantity, 0);
+
+  doc.setFont("Helvetica", "normal");
   doc.text(`Total Qty: ${totalQty}`, 2, y); y += 4;
+
   doc.text(`Subtotal: Rs. ${order.amount}`, 2, y); y += 4;
 
   if (order.discount) {
@@ -238,27 +262,26 @@ export const printThermalMobileSafe = (order, companyName = "S3 Retail Hub", ser
     y += 4;
   }
 
+  // Bold Grand Total
   doc.setFont("Helvetica", "bold");
   doc.text(`Grand Total: Rs. ${order.finalAmount || order.amount}`, 2, y);
   y += 8;
 
+  // Footer
   doc.setFont("Helvetica", "normal");
   doc.setFontSize(8);
   doc.text("Thank you! Visit again", 29, y, { align: "center" });
 
-  // --- MOBILE SAFE PRINT ---
+  // ---------------- SAVE + PRINT ----------------
   const pdfBlob = doc.output("blob");
   const url = URL.createObjectURL(pdfBlob);
 
-  // Force download
+  window.open(url); // open print dialog on Android
+
   const a = document.createElement("a");
   a.href = url;
-  a.download = `Invoice_${invoiceNum}.pdf`;
+  a.download = `${invoiceNum}.pdf`;
   a.click();
-
-  // Ask user to open file manually for print
-  alert("Invoice downloaded. Open the file to print using your Printer App.");
 };
-
 
 
