@@ -84,108 +84,55 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
 };
 
 // Print invoice in browser
-export const printInvoice = async (
-  order,
-  currency,
-  user,
-  axios,
-  orderIndex = 1,
-  companyName = "S3 Retail Hub"
-) => {
+export const printInvoice = (order, currency, user, orderIndex = 1, companyName = "S3 Retail Hub") => {
   if (!order) return;
 
   const now = new Date();
-  const invoiceNo = `${now.getFullYear()}${String(
-    now.getMonth() + 1
-  ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
-
+  const invoiceNo = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}${orderIndex}`;
   const safeCurrency = currency === "₹" ? "Rs." : currency;
+
   const LINE_WIDTH = 32;
 
-  const center = (text) => {
-    if (text.length >= LINE_WIDTH) return text.slice(0, LINE_WIDTH);
-    const pad = Math.floor((LINE_WIDTH - text.length) / 2);
-    return " ".repeat(pad) + text;
+  const center = (t) => {
+    const pad = Math.max(0, Math.floor((LINE_WIDTH - t.length) / 2));
+    return " ".repeat(pad) + t;
   };
 
-  const line = (char = "-") => char.repeat(LINE_WIDTH);
-
-  const row = (left, right) => {
-    const space = LINE_WIDTH - left.length - right.length;
-    if (space <= 0) return left.slice(0, LINE_WIDTH);
-    return left + " ".repeat(space) + right;
+  const row = (l, r) => {
+    const space = LINE_WIDTH - l.length - r.length;
+    return l + " ".repeat(Math.max(1, space)) + r;
   };
 
   let text = "";
-
   text += center(companyName) + "\n";
   text += center("INVOICE") + "\n";
-  text += line() + "\n";
-
+  text += "-".repeat(LINE_WIDTH) + "\n";
   text += `Invoice: ${invoiceNo}\n`;
   text += `Date: ${now.toLocaleDateString("en-IN")}\n`;
   text += `Customer: ${order.customerName || user?.name || "Guest"}\n`;
+  text += "-".repeat(LINE_WIDTH) + "\n";
 
-  text += line() + "\n";
-
-  order.items.forEach((item) => {
-    const name = (item.product?.name || item.name).slice(0, 18);
-    const qty = item.quantity;
-    const price = (
-      (item.product?.offerPrice || item.offerPrice || 0) * qty
-    ).toFixed(2);
-
-    text += row(`${name} x${qty}`, `${safeCurrency}${price}`) + "\n";
+  order.items.forEach(i => {
+    const name = (i.product?.name || i.name).slice(0,18);
+    const price = ((i.product?.offerPrice || i.offerPrice || 0) * i.quantity).toFixed(2);
+    text += row(`${name} x${i.quantity}`, `${safeCurrency}${price}`) + "\n";
   });
 
-  text += line() + "\n";
-
-  text += row(
-    "Total Qty",
-    order.items.reduce((s, i) => s + i.quantity, 0).toString()
-  ) + "\n";
-
+  text += "-".repeat(LINE_WIDTH) + "\n";
   text += row("Total", `${safeCurrency}${order.amount.toFixed(2)}`) + "\n";
-
-  text += line() + "\n";
+  text += "-".repeat(LINE_WIDTH) + "\n";
   text += center("Thank you! Visit again") + "\n\n";
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<body>
-<pre style="
-  margin:0;
-  font-family: monospace;
-  font-size:12px;
-  width:32ch;
-">
+  const win = window.open("", "_blank");
+  win.document.write(`
+    <pre style="font-family:monospace;font-size:12px;margin:0;width:32ch;">
 ${text}
-</pre>
-</body>
-</html>
-`;
-
-  const iframe = document.createElement("iframe");
-  iframe.style.position = "fixed";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
-  iframe.style.border = "0";
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
-
-  setTimeout(() => {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-
-    setTimeout(() => document.body.removeChild(iframe), 500);
-  }, 300);
-
-  if (axios) await sendPrintJobToBackend(order, axios);
+    </pre>
+    <script>
+      window.onload = () => window.print();
+    </script>
+  `);
+  win.document.close();
 };
 
 
