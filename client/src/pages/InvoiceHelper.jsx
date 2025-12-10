@@ -102,39 +102,40 @@ export const printInvoice = async (
   const safeCurrency = currency === "₹" ? "Rs." : currency;
 
   const itemsHTML = order.items
-    .map(
-      (item) => `
-      <div class="row">
-        <span>${item.product?.name || item.name} x${item.quantity}</span>
-        <span>${safeCurrency}${(
-          (item.product?.offerPrice || item.offerPrice || 0) *
-          item.quantity
-        ).toFixed(2)}</span>
-      </div>
-    `
-    )
+    .map((item) => {
+      const name = (item.product?.name || item.name).substring(0, 20);
+      const qty = item.quantity;
+      const price = (
+        (item.product?.offerPrice || item.offerPrice || 0) * qty
+      ).toFixed(2);
+
+      return `
+        <tr>
+          <td class="item">${name} x${qty}</td>
+          <td class="price">${safeCurrency}${price}</td>
+        </tr>
+      `;
+    })
     .join("");
 
   const html = `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8" />
   <title>Invoice</title>
+
   <style>
     @page {
       size: 58mm auto;
       margin: 0;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
-      padding: 4mm;
+      padding: 2mm;
       width: 58mm;
-      font-family: Arial, sans-serif;
+      font-family: monospace;
       font-size: 12px;
       color: #000;
     }
@@ -149,15 +150,30 @@ export const printInvoice = async (
       margin: 6px 0;
     }
 
-    .row {
-      display: flex;
-      justify-content: space-between;
-      margin: 2px 0;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 2px 0;
+      vertical-align: top;
+    }
+
+    .item {
+      width: 70%;
+      text-align: left;
+      word-break: break-word;
+    }
+
+    .price {
+      width: 30%;
+      text-align: right;
+      white-space: nowrap;
     }
 
     .total {
       font-weight: bold;
-      margin-top: 4px;
     }
   </style>
 </head>
@@ -174,19 +190,24 @@ export const printInvoice = async (
 
   <div class="divider"></div>
 
-  ${itemsHTML}
+  <table>
+    ${itemsHTML}
+  </table>
 
   <div class="divider"></div>
 
-  <div class="row total">
-    <span>Total Qty</span>
-    <span>${order.items.reduce((s, i) => s + i.quantity, 0)}</span>
-  </div>
-
-  <div class="row total">
-    <span>Total</span>
-    <span>${safeCurrency}${order.amount.toFixed(2)}</span>
-  </div>
+  <table>
+    <tr class="total">
+      <td>Total Qty</td>
+      <td class="price">
+        ${order.items.reduce((s, i) => s + i.quantity, 0)}
+      </td>
+    </tr>
+    <tr class="total">
+      <td>Total</td>
+      <td class="price">${safeCurrency}${order.amount.toFixed(2)}</td>
+    </tr>
+  </table>
 
   <div class="divider"></div>
 
@@ -197,6 +218,8 @@ export const printInvoice = async (
 
   const iframe = document.createElement("iframe");
   iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
   iframe.style.width = "0";
   iframe.style.height = "0";
   iframe.style.border = "0";
@@ -213,11 +236,12 @@ export const printInvoice = async (
 
     setTimeout(() => {
       document.body.removeChild(iframe);
-    }, 500);
-  }, 300);
+    }, 1000);
+  }, 400);
 
   if (axios) await sendPrintJobToBackend(order, axios);
 };
+
 
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
