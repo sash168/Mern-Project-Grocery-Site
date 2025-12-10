@@ -84,96 +84,141 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
 };
 
 // Print invoice in browser
-export const printInvoice = async (order, currency, user, axios, orderIndex = 1, companyName = "BS Soda") => {
+export const printInvoice = async (
+  order,
+  currency,
+  user,
+  axios,
+  orderIndex = 1,
+  companyName = "S3 Retail Hub"
+) => {
   if (!order) return;
 
   const now = new Date();
-  const invoiceNo = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${orderIndex}`;
+  const invoiceNo = `${now.getFullYear()}${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
+
   const safeCurrency = currency === "₹" ? "Rs." : currency;
 
-  const itemsHTML = order.items.map(item => `
-    <div style="display:flex;justify-content:space-between;font-weight:500;margin:4px 0;padding:4px 2px;border-bottom:1px solid #e2e8f0;font-size:15px">
-      <span>${item.product?.name || item.name || "Deleted Product"} (x${item.quantity})</span>
-      <span>${safeCurrency}${((item.product?.offerPrice || item.offerPrice || 0) * item.quantity).toFixed(2)}</span>
-    </div>
-  `).join('');
+  const itemsHTML = order.items
+    .map(
+      (item) => `
+      <div class="row">
+        <span>${item.product?.name || item.name} x${item.quantity}</span>
+        <span>${safeCurrency}${(
+          (item.product?.offerPrice || item.offerPrice || 0) *
+          item.quantity
+        ).toFixed(2)}</span>
+      </div>
+    `
+    )
+    .join("");
 
   const html = `
-    <html>
-      <head>
-        <title>Invoice</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 16px; font-size: 15px; color: #1f2937; }
-          h2 { text-align: center; font-size: 22px; margin-bottom: 8px; font-weight: bold; }
-          .company { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 4px; color: #111827; }
-          .header-info { margin-bottom: 12px; }
-          .header-info p { margin: 2px 0; }
-          .totals { font-weight: bold; font-size: 17px; margin-top: 10px; display:flex; justify-content:space-between; border-top:5px solid #e2e8f0;font-size:15px, margin-bottom: 10px;}
-          .subtotal { font-size: 18px; font-weight: 700; margin-top: 4px; display:flex; justify-content:space-between; }
-          .thank-you { text-align: center; margin-top: 12px; font-size: 15px; color: #16a085; font-weight:500; }
-        </style>
-      </head>
-      <body>
-        ${companyName ? `<div class="company">${companyName}</div>` : ""}
-        <h2>Invoice</h2>
-        <div class="header-info">
-          <p>Invoice No: INV${invoiceNo}</p>
-          <p>Date: ${new Date(order.createdAt).toLocaleDateString()}</p>
-          <p>Customer: ${order.customerName || user?.name || "Guest"}</p>
-          <p>Contact: ${order.customerNumber || "N/A"}</p>
-        </div>
-        <div style="border-top:5px solid #e2e8f0;font-size:15px">
-          ${itemsHTML}
-        </div>
-        <div class="totals">
-          <span>Total Quantity:</span>
-          <span>${order.items.reduce((sum,i)=>sum+i.quantity,0)}</span>
-        </div>
-        <div class="subtotal">
-          <span>Subtotal:</span>
-          <span>${safeCurrency}${order.amount.toFixed(2)}</span>
-        </div>
-        <p class="thank-you">Thank you for shopping with us!</p>
-      </body>
-    </html>
-  `;
-  // -------------------------------
-// FIX FOR ANDROID + DESKTOP
-// -------------------------------
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Invoice</title>
+  <style>
+    @page {
+      size: 58mm auto;
+      margin: 0;
+    }
 
-const iframe = document.createElement("iframe");
-iframe.style.position = "fixed";
-iframe.style.right = "0";
-iframe.style.bottom = "0";
-iframe.style.width = "0";
-iframe.style.height = "0";
-iframe.style.border = "0";
-document.body.appendChild(iframe);
+    * {
+      box-sizing: border-box;
+    }
 
-const doc = iframe.contentWindow.document;
-doc.open();
-doc.write(html);
-doc.close();
+    body {
+      margin: 0;
+      padding: 4mm;
+      width: 58mm;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: #000;
+    }
 
-// ⭐ ANDROID CHROME FIX ⭐
-// Wait for HTML to be ready before printing
-setTimeout(() => {
-  try {
+    .center {
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .divider {
+      border-top: 1px dashed #000;
+      margin: 6px 0;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0;
+    }
+
+    .total {
+      font-weight: bold;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="center">${companyName}</div>
+  <div class="center">INVOICE</div>
+
+  <div class="divider"></div>
+
+  <div>Invoice: ${invoiceNo}</div>
+  <div>Date: ${now.toLocaleDateString("en-IN")}</div>
+  <div>Customer: ${order.customerName || user?.name || "Guest"}</div>
+
+  <div class="divider"></div>
+
+  ${itemsHTML}
+
+  <div class="divider"></div>
+
+  <div class="row total">
+    <span>Total Qty</span>
+    <span>${order.items.reduce((s, i) => s + i.quantity, 0)}</span>
+  </div>
+
+  <div class="row total">
+    <span>Total</span>
+    <span>${safeCurrency}${order.amount.toFixed(2)}</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="center">Thank you! Visit again</div>
+</body>
+</html>
+`;
+
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  setTimeout(() => {
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
-  } catch (err) {
-    console.error("Mobile print failed:", err);
-  }
 
-  // Clean up after printing
-  setTimeout(() => document.body.removeChild(iframe), 500);
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 500);
+  }, 300);
 
-}, 150); // ← THIS DELAY IS REQUIRED FOR ANDROID
-
-
-  // Send print job to backend after browser print
   if (axios) await sendPrintJobToBackend(order, axios);
 };
+
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
 
