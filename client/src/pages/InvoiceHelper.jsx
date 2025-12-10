@@ -93,55 +93,94 @@ export const printInvoice = (
 ) => {
   if (!order) return;
 
-  let text = "";
-
-  // ✅ Initialize printer
-  text += "\x1B\x40";
-
-  text += `${companyName}\n`;
-  text += `INVOICE\n`;
-  text += "------------------------------\n";
-
   const now = new Date();
   const invoiceNo = `${now.getFullYear()}${String(
     now.getMonth() + 1
   ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
 
-  text += `Invoice: ${invoiceNo}\n`;
-  text += `Date: ${now.toLocaleDateString("en-IN")}\n`;
-  text += `Customer: ${order.customerName || user?.name || "Guest"}\n`;
-  text += "------------------------------\n";
+  const items = order.items
+    .map(
+      (i) => `
+      <div class="row">
+        <span>${i.product?.name || i.name} x${i.quantity}</span>
+        <span>${currency}${(
+          (i.product?.offerPrice || i.offerPrice) * i.quantity
+        ).toFixed(2)}</span>
+      </div>
+    `
+    )
+    .join("");
 
-  order.items.forEach((item) => {
-    const name = (item.product?.name || item.name).slice(0, 24);
-    const qty = item.quantity;
-    const price =
-      (item.product?.offerPrice || item.offerPrice) * qty;
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Invoice</title>
+  <style>
+    @page {
+      size: 58mm auto;
+      margin: 0;
+    }
+    body {
+      margin: 0;
+      padding: 4mm;
+      width: 58mm;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .center {
+      text-align: center;
+      font-weight: bold;
+    }
+    .divider {
+      border-top: 1px dashed #000;
+      margin: 6px 0;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="center">${companyName}</div>
+  <div class="center">INVOICE</div>
 
-    text += `${name} x${qty}   ${currency}${price.toFixed(2)}\n`;
-  });
+  <div class="divider"></div>
 
-  text += "------------------------------\n";
-  text += `Total: ${currency}${order.amount.toFixed(2)}\n`;
+  <div>Invoice: ${invoiceNo}</div>
+  <div>Date: ${now.toLocaleDateString("en-IN")}</div>
+  <div>Customer: ${order.customerName || user?.name || "Guest"}</div>
 
-  // ✅ VERY IMPORTANT — END JOB PROPERLY
-  text += "\n\n\n\n\n";     // manual tear space
-  text += "\x1B\x64\x06";   // feed 6 lines (ESC d n)
+  <div class="divider"></div>
 
-  // encode for RawBT
-  const encoded = encodeURIComponent(text);
+  ${items}
 
-  const rawbtIntent =
-    `intent://print/#Intent;` +
-    `scheme=rawbt;` +
-    `package=ru.a402d.rawbtprinter;` +
-    `S.document_type=rawbt;` +
-    `S.print_raw_data=${encoded};` +
-    `end`;
+  <div class="divider"></div>
 
-  // ✅ Opens printer screen ONLY (no other app UI)
-  window.location.href = rawbtIntent;
+  <div class="row">
+    <strong>Total</strong>
+    <strong>${currency}${order.amount.toFixed(2)}</strong>
+  </div>
+
+  <div class="divider"></div>
+  <div class="center">Thank you! Visit again</div>
+
+  <script>
+    window.onload = () => {
+      window.print();
+      window.onafterprint = () => window.close();
+    };
+  </script>
+</body>
+</html>
+`;
+
+  const win = window.open("", "_blank", "width=300,height=600");
+  win.document.write(html);
+  win.document.close();
 };
+
 
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
