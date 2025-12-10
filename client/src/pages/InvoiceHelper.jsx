@@ -84,40 +84,53 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
 };
 
 // Print invoice in browser
-export const printInvoice = async (order, currency, user, orderIndex = 1, companyName = "S3 Retail Hub") => {
+export const printInvoice = (
+  order,
+  currency,
+  user,
+  orderIndex = 1,
+  companyName = "S3 Retail Hub"
+) => {
   if (!order) return;
 
   let text = "";
+
+  // ✅ Initialize printer
+  text += "\x1B\x40";
+
   text += `${companyName}\n`;
   text += `INVOICE\n`;
-  text += `-----------------------------\n`;
+  text += "------------------------------\n";
 
   const now = new Date();
-  const invoiceNo = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
+  const invoiceNo = `${now.getFullYear()}${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
 
   text += `Invoice: ${invoiceNo}\n`;
   text += `Date: ${now.toLocaleDateString("en-IN")}\n`;
   text += `Customer: ${order.customerName || user?.name || "Guest"}\n`;
-  text += `-----------------------------\n`;
+  text += "------------------------------\n";
 
   order.items.forEach((item) => {
-    const name = item.product?.name || item.name;
+    const name = (item.product?.name || item.name).slice(0, 24);
     const qty = item.quantity;
-    const price = (item.product?.offerPrice || item.offerPrice) * qty;
+    const price =
+      (item.product?.offerPrice || item.offerPrice) * qty;
 
-    text += `${name} x${qty}  ${currency}${price.toFixed(2)}\n`;
+    text += `${name} x${qty}   ${currency}${price.toFixed(2)}\n`;
   });
 
-  text += `-----------------------------\n`;
-  text += `Total Qty: ${order.items.reduce((s, i) => s + i.quantity, 0)}\n`;
+  text += "------------------------------\n";
   text += `Total: ${currency}${order.amount.toFixed(2)}\n`;
-  text += `-----------------------------\n`;
-  text += `Thank you! Visit again\n\n\n`;
 
-  // IMPORTANT: Encode text for URL
+  // ✅ VERY IMPORTANT — END JOB PROPERLY
+  text += "\n\n\n\n\n";     // manual tear space
+  text += "\x1B\x64\x06";   // feed 6 lines (ESC d n)
+
+  // encode for RawBT
   const encoded = encodeURIComponent(text);
 
-  // RawBT Intent to open print preview window
   const rawbtIntent =
     `intent://print/#Intent;` +
     `scheme=rawbt;` +
@@ -126,11 +139,9 @@ export const printInvoice = async (order, currency, user, orderIndex = 1, compan
     `S.print_raw_data=${encoded};` +
     `end`;
 
-  // OPEN RAWBT PRINT PREVIEW (not the app)
+  // ✅ Opens printer screen ONLY (no other app UI)
   window.location.href = rawbtIntent;
 };
-
-
 
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
