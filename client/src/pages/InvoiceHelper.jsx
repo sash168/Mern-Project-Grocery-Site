@@ -84,33 +84,39 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
 };
 
 // Print invoice in browser
-export const printInvoice = (order, currency, user, orderIndex = 1, companyName = "S3 Retail Hub") => {
+export const printInvoice = (
+  order,
+  currency,
+  user,
+  orderIndex = 1,
+  companyName = "S3 Retail Hub"
+) => {
   if (!order) return;
 
   const now = new Date();
   const invoiceNo = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}${orderIndex}`;
   const safeCurrency = currency === "₹" ? "Rs." : currency;
 
-  const LINE_WIDTH = 32;
+  const LINE = 32;
 
-  const center = (t) => {
-    const pad = Math.max(0, Math.floor((LINE_WIDTH - t.length) / 2));
+  const center = t => {
+    const pad = Math.max(0, Math.floor((LINE - t.length) / 2));
     return " ".repeat(pad) + t;
   };
 
   const row = (l, r) => {
-    const space = LINE_WIDTH - l.length - r.length;
+    const space = LINE - l.length - r.length;
     return l + " ".repeat(Math.max(1, space)) + r;
   };
 
   let text = "";
   text += center(companyName) + "\n";
   text += center("INVOICE") + "\n";
-  text += "-".repeat(LINE_WIDTH) + "\n";
+  text += "-".repeat(LINE) + "\n";
   text += `Invoice: ${invoiceNo}\n`;
   text += `Date: ${now.toLocaleDateString("en-IN")}\n`;
   text += `Customer: ${order.customerName || user?.name || "Guest"}\n`;
-  text += "-".repeat(LINE_WIDTH) + "\n";
+  text += "-".repeat(LINE) + "\n";
 
   order.items.forEach(i => {
     const name = (i.product?.name || i.name).slice(0,18);
@@ -118,21 +124,24 @@ export const printInvoice = (order, currency, user, orderIndex = 1, companyName 
     text += row(`${name} x${i.quantity}`, `${safeCurrency}${price}`) + "\n";
   });
 
-  text += "-".repeat(LINE_WIDTH) + "\n";
+  text += "-".repeat(LINE) + "\n";
   text += row("Total", `${safeCurrency}${order.amount.toFixed(2)}`) + "\n";
-  text += "-".repeat(LINE_WIDTH) + "\n";
-  text += center("Thank you! Visit again") + "\n\n";
+  text += "-".repeat(LINE) + "\n";
+  text += center("Thank you! Visit again") + "\n";
 
-  const win = window.open("", "_blank");
-  win.document.write(`
-    <pre style="font-family:monospace;font-size:12px;margin:0;width:32ch;">
-${text}
-    </pre>
-    <script>
-      window.onload = () => window.print();
-    </script>
-  `);
-  win.document.close();
+  // ✅ SHARE INSTEAD OF PRINT
+  const blob = new Blob([text], { type: "text/plain" });
+  const file = new File([blob], "invoice.txt", { type: "text/plain" });
+
+  if (navigator.share) {
+    navigator.share({
+      files: [file],
+      title: "Invoice",
+      text: "Print invoice"
+    });
+  } else {
+    alert("Sharing not supported on this device");
+  }
 };
 
 
