@@ -98,90 +98,63 @@ export const printInvoice = (
     now.getMonth() + 1
   ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
 
-  const items = order.items
-    .map(
-      (i) => `
-      <div class="row">
-        <span>${i.product?.name || i.name} x${i.quantity}</span>
-        <span>${currency}${(
-          (i.product?.offerPrice || i.offerPrice) * i.quantity
-        ).toFixed(2)}</span>
-      </div>
-    `
-    )
-    .join("");
+  const safeCurrency = currency === "₹" ? "Rs." : currency;
+  const customer =
+    String(order.customerName || user?.name || "Guest");
+
+  let bill = "";
+  bill += `${companyName}\n`;
+  bill += `INVOICE\n`;
+  bill += `------------------------------\n`;
+  bill += `Invoice: ${invoiceNo}\n`;
+  bill += `Date: ${now.toLocaleDateString("en-IN")}\n`;
+  bill += `Customer: ${customer}\n`;
+  bill += `------------------------------\n`;
+
+  order.items.forEach((i) => {
+    const name = (i.product?.name || i.name).slice(0, 18);
+    const price =
+      (i.product?.offerPrice || i.offerPrice || 0) * i.quantity;
+    bill += `${name} x${i.quantity}   ${safeCurrency}${price.toFixed(
+      2
+    )}\n`;
+  });
+
+  bill += `------------------------------\n`;
+  bill += `Total: ${safeCurrency}${order.amount.toFixed(2)}\n`;
+  bill += `------------------------------\n`;
+  bill += `Thank you! Visit again\n`;
 
   const html = `
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Invoice</title>
+  <title>Print</title>
   <style>
-    @page {
-      size: 58mm auto;
-      margin: 0;
-    }
+    @page { margin: 0; }
     body {
       margin: 0;
-      padding: 4mm;
-      width: 58mm;
+      padding: 12px;
       font-family: monospace;
+      white-space: pre;
       font-size: 12px;
-    }
-    .center {
-      text-align: center;
-      font-weight: bold;
-    }
-    .divider {
-      border-top: 1px dashed #000;
-      margin: 6px 0;
-    }
-    .row {
-      display: flex;
-      justify-content: space-between;
     }
   </style>
 </head>
 <body>
-  <div class="center">${companyName}</div>
-  <div class="center">INVOICE</div>
-
-  <div class="divider"></div>
-
-  <div>Invoice: ${invoiceNo}</div>
-  <div>Date: ${now.toLocaleDateString("en-IN")}</div>
-  <div>Customer: ${order.customerName || user?.name || "Guest"}</div>
-
-  <div class="divider"></div>
-
-  ${items}
-
-  <div class="divider"></div>
-
-  <div class="row">
-    <strong>Total</strong>
-    <strong>${currency}${order.amount.toFixed(2)}</strong>
-  </div>
-
-  <div class="divider"></div>
-  <div class="center">Thank you! Visit again</div>
-
-  <script>
-    window.onload = () => {
-      window.print();
-      window.onafterprint = () => window.close();
-    };
-  </script>
+${bill}
 </body>
 </html>
 `;
 
-  const win = window.open("", "_blank", "width=300,height=600");
+  const win = window.open("", "_blank");
+  win.document.open();
   win.document.write(html);
   win.document.close();
+
+  // ❗ DO NOT AUTO print on mobile
+  // user will tap ⋮ → Print
 };
-
-
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
 
