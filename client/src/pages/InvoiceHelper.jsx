@@ -100,126 +100,74 @@ export const printInvoice = async (
   ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
 
   const safeCurrency = currency === "₹" ? "Rs." : currency;
+  const LINE_WIDTH = 32;
 
-  const itemsHTML = order.items
-    .map((item) => {
-      const name = (item.product?.name || item.name).substring(0, 20);
-      const qty = item.quantity;
-      const price = (
-        (item.product?.offerPrice || item.offerPrice || 0) * qty
-      ).toFixed(2);
+  const center = (text) => {
+    if (text.length >= LINE_WIDTH) return text.slice(0, LINE_WIDTH);
+    const pad = Math.floor((LINE_WIDTH - text.length) / 2);
+    return " ".repeat(pad) + text;
+  };
 
-      return `
-        <tr>
-          <td class="item">${name} x${qty}</td>
-          <td class="price">${safeCurrency}${price}</td>
-        </tr>
-      `;
-    })
-    .join("");
+  const line = (char = "-") => char.repeat(LINE_WIDTH);
+
+  const row = (left, right) => {
+    const space = LINE_WIDTH - left.length - right.length;
+    if (space <= 0) return left.slice(0, LINE_WIDTH);
+    return left + " ".repeat(space) + right;
+  };
+
+  let text = "";
+
+  text += center(companyName) + "\n";
+  text += center("INVOICE") + "\n";
+  text += line() + "\n";
+
+  text += `Invoice: ${invoiceNo}\n`;
+  text += `Date: ${now.toLocaleDateString("en-IN")}\n`;
+  text += `Customer: ${order.customerName || user?.name || "Guest"}\n`;
+
+  text += line() + "\n";
+
+  order.items.forEach((item) => {
+    const name = (item.product?.name || item.name).slice(0, 18);
+    const qty = item.quantity;
+    const price = (
+      (item.product?.offerPrice || item.offerPrice || 0) * qty
+    ).toFixed(2);
+
+    text += row(`${name} x${qty}`, `${safeCurrency}${price}`) + "\n";
+  });
+
+  text += line() + "\n";
+
+  text += row(
+    "Total Qty",
+    order.items.reduce((s, i) => s + i.quantity, 0).toString()
+  ) + "\n";
+
+  text += row("Total", `${safeCurrency}${order.amount.toFixed(2)}`) + "\n";
+
+  text += line() + "\n";
+  text += center("Thank you! Visit again") + "\n\n";
 
   const html = `
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>Invoice</title>
-
-  <style>
-    @page {
-      size: 58mm auto;
-      margin: 0;
-    }
-
-    body {
-      margin: 0;
-      padding: 2mm;
-      width: 58mm;
-      font-family: monospace;
-      font-size: 12px;
-      color: #000;
-    }
-
-    .center {
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .divider {
-      border-top: 1px dashed #000;
-      margin: 6px 0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    td {
-      padding: 2px 0;
-      vertical-align: top;
-    }
-
-    .item {
-      width: 70%;
-      text-align: left;
-      word-break: break-word;
-    }
-
-    .price {
-      width: 30%;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .total {
-      font-weight: bold;
-    }
-  </style>
-</head>
-
 <body>
-  <div class="center">${companyName}</div>
-  <div class="center">INVOICE</div>
-
-  <div class="divider"></div>
-
-  <div>Invoice: ${invoiceNo}</div>
-  <div>Date: ${now.toLocaleDateString("en-IN")}</div>
-  <div>Customer: ${order.customerName || user?.name || "Guest"}</div>
-
-  <div class="divider"></div>
-
-  <table>
-    ${itemsHTML}
-  </table>
-
-  <div class="divider"></div>
-
-  <table>
-    <tr class="total">
-      <td>Total Qty</td>
-      <td class="price">
-        ${order.items.reduce((s, i) => s + i.quantity, 0)}
-      </td>
-    </tr>
-    <tr class="total">
-      <td>Total</td>
-      <td class="price">${safeCurrency}${order.amount.toFixed(2)}</td>
-    </tr>
-  </table>
-
-  <div class="divider"></div>
-
-  <div class="center">Thank you! Visit again</div>
+<pre style="
+  margin:0;
+  font-family: monospace;
+  font-size:12px;
+  width:32ch;
+">
+${text}
+</pre>
 </body>
 </html>
 `;
 
   const iframe = document.createElement("iframe");
   iframe.style.position = "fixed";
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
   iframe.style.width = "0";
   iframe.style.height = "0";
   iframe.style.border = "0";
@@ -234,10 +182,8 @@ export const printInvoice = async (
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
 
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-    }, 1000);
-  }, 400);
+    setTimeout(() => document.body.removeChild(iframe), 500);
+  }, 300);
 
   if (axios) await sendPrintJobToBackend(order, axios);
 };
