@@ -84,65 +84,52 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
 };
 
 // Print invoice in browser
-export const printInvoice = (
-  order,
-  currency,
-  user,
-  orderIndex = 1,
-  companyName = "S3 Retail Hub"
-) => {
+export const printInvoice = async (order, currency, user, orderIndex = 1, companyName = "S3 Retail Hub") => {
   if (!order) return;
 
-  const now = new Date();
-  const invoiceNo = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}${orderIndex}`;
-  const safeCurrency = currency === "₹" ? "Rs." : currency;
-
-  const LINE = 32;
-
-  const center = t => {
-    const pad = Math.max(0, Math.floor((LINE - t.length) / 2));
-    return " ".repeat(pad) + t;
-  };
-
-  const row = (l, r) => {
-    const space = LINE - l.length - r.length;
-    return l + " ".repeat(Math.max(1, space)) + r;
-  };
-
   let text = "";
-  text += center(companyName) + "\n";
-  text += center("INVOICE") + "\n";
-  text += "-".repeat(LINE) + "\n";
+  text += `${companyName}\n`;
+  text += `INVOICE\n`;
+  text += `-----------------------------\n`;
+
+  const now = new Date();
+  const invoiceNo = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
+
   text += `Invoice: ${invoiceNo}\n`;
   text += `Date: ${now.toLocaleDateString("en-IN")}\n`;
   text += `Customer: ${order.customerName || user?.name || "Guest"}\n`;
-  text += "-".repeat(LINE) + "\n";
+  text += `-----------------------------\n`;
 
-  order.items.forEach(i => {
-    const name = (i.product?.name || i.name).slice(0,18);
-    const price = ((i.product?.offerPrice || i.offerPrice || 0) * i.quantity).toFixed(2);
-    text += row(`${name} x${i.quantity}`, `${safeCurrency}${price}`) + "\n";
+  order.items.forEach((item) => {
+    const name = item.product?.name || item.name;
+    const qty = item.quantity;
+    const price = (item.product?.offerPrice || item.offerPrice) * qty;
+
+    text += `${name} x${qty}  ${currency}${price.toFixed(2)}\n`;
   });
 
-  text += "-".repeat(LINE) + "\n";
-  text += row("Total", `${safeCurrency}${order.amount.toFixed(2)}`) + "\n";
-  text += "-".repeat(LINE) + "\n";
-  text += center("Thank you! Visit again") + "\n";
+  text += `-----------------------------\n`;
+  text += `Total Qty: ${order.items.reduce((s, i) => s + i.quantity, 0)}\n`;
+  text += `Total: ${currency}${order.amount.toFixed(2)}\n`;
+  text += `-----------------------------\n`;
+  text += `Thank you! Visit again\n\n\n`;
 
-  // ✅ SHARE INSTEAD OF PRINT
-  const blob = new Blob([text], { type: "text/plain" });
-  const file = new File([blob], "invoice.txt", { type: "text/plain" });
+  // IMPORTANT: Encode text for URL
+  const encoded = encodeURIComponent(text);
 
-  if (navigator.share) {
-    navigator.share({
-      files: [file],
-      title: "Invoice",
-      text: "Print invoice"
-    });
-  } else {
-    alert("Sharing not supported on this device");
-  }
+  // RawBT Intent to open print preview window
+  const rawbtIntent =
+    `intent://print/#Intent;` +
+    `scheme=rawbt;` +
+    `package=ru.a402d.rawbtprinter;` +
+    `S.document_type=rawbt;` +
+    `S.print_raw_data=${encoded};` +
+    `end`;
+
+  // OPEN RAWBT PRINT PREVIEW (not the app)
+  window.location.href = rawbtIntent;
 };
+
 
 
 
