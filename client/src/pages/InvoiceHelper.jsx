@@ -89,8 +89,7 @@ export const printInvoice = (order) => {
   const now = new Date();
 
   let bill = `
-S3 Retail Hub
-INVOICE
+      S3 Retail Hub
 ------------------------------
 Invoice: ${now.getTime()}
 Date: ${now.toLocaleDateString("en-IN")}
@@ -108,13 +107,14 @@ Customer: ${order.customerName || "Guest"}
 ------------------------------
 Total: ₹${order.amount}
 ------------------------------
-Thank you! Visit again
+    Thank you! Visit again
 `;
 
-  // 🔴 KEY PART — replace current page content
-  const original = document.body.innerHTML;
-
-  document.body.innerHTML = `
+  // ✅ CREATE TEMP PRINT NODE
+  const printDiv = document.createElement("div");
+  printDiv.style.position = "fixed";
+  printDiv.style.left = "-9999px";
+  printDiv.innerHTML = `
     <pre style="
       font-family: monospace;
       font-size: 12px;
@@ -124,14 +124,20 @@ ${bill}
     </pre>
   `;
 
-  // ✅ OPEN PRINT DIALOG
+  document.body.appendChild(printDiv);
+
+  // ✅ PRINT ONLY THAT NODE
+  const printContents = printDiv.innerHTML;
+  const originalContents = document.body.innerHTML;
+
+  document.body.innerHTML = printContents;
   window.print();
 
-  // ✅ RESTORE PAGE AFTER PRINT
-  setTimeout(() => {
-    document.body.innerHTML = original;
-  }, 500);
+  // ✅ RESTORE SAFELY
+  document.body.innerHTML = originalContents;
+  document.body.removeChild(printDiv);
 };
+
 
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
