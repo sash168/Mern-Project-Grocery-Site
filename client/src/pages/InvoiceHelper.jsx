@@ -83,78 +83,56 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
   doc.save(`Invoice_INV${invoiceNo}.pdf`);
 };
 
-// Print invoice in browser
-export const printInvoice = (
-  order,
-  currency,
-  user,
-  orderIndex = 1,
-  companyName = "S3 Retail Hub"
-) => {
+export const printInvoice = (order) => {
   if (!order) return;
 
   const now = new Date();
-  const invoiceNo = `${now.getFullYear()}${String(
-    now.getMonth() + 1
-  ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${orderIndex}`;
 
-  const safeCurrency = currency === "₹" ? "Rs." : currency;
-  const customer =
-    String(order.customerName || user?.name || "Guest");
-
-  let bill = "";
-  bill += `${companyName}\n`;
-  bill += `INVOICE\n`;
-  bill += `------------------------------\n`;
-  bill += `Invoice: ${invoiceNo}\n`;
-  bill += `Date: ${now.toLocaleDateString("en-IN")}\n`;
-  bill += `Customer: ${customer}\n`;
-  bill += `------------------------------\n`;
-
-  order.items.forEach((i) => {
-    const name = (i.product?.name || i.name).slice(0, 18);
-    const price =
-      (i.product?.offerPrice || i.offerPrice || 0) * i.quantity;
-    bill += `${name} x${i.quantity}   ${safeCurrency}${price.toFixed(
-      2
-    )}\n`;
-  });
-
-  bill += `------------------------------\n`;
-  bill += `Total: ${safeCurrency}${order.amount.toFixed(2)}\n`;
-  bill += `------------------------------\n`;
-  bill += `Thank you! Visit again\n`;
-
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Print</title>
-  <style>
-    @page { margin: 0; }
-    body {
-      margin: 0;
-      padding: 12px;
-      font-family: monospace;
-      white-space: pre;
-      font-size: 12px;
-    }
-  </style>
-</head>
-<body>
-${bill}
-</body>
-</html>
+  let bill = `
+S3 Retail Hub
+INVOICE
+------------------------------
+Invoice: ${now.getTime()}
+Date: ${now.toLocaleDateString("en-IN")}
+Customer: ${order.customerName || "Guest"}
+------------------------------
 `;
 
-  const win = window.open("", "_blank");
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+  order.items.forEach(i => {
+    const name = (i.product?.name || i.name).slice(0, 20);
+    const price = (i.product?.offerPrice || i.offerPrice) * i.quantity;
+    bill += `${name} x${i.quantity}   ₹${price}\n`;
+  });
 
-  // ❗ DO NOT AUTO print on mobile
-  // user will tap ⋮ → Print
+  bill += `
+------------------------------
+Total: ₹${order.amount}
+------------------------------
+Thank you! Visit again
+`;
+
+  // 🔴 KEY PART — replace current page content
+  const original = document.body.innerHTML;
+
+  document.body.innerHTML = `
+    <pre style="
+      font-family: monospace;
+      font-size: 12px;
+      padding: 12px;
+    ">
+${bill}
+    </pre>
+  `;
+
+  // ✅ OPEN PRINT DIALOG
+  window.print();
+
+  // ✅ RESTORE PAGE AFTER PRINT
+  setTimeout(() => {
+    document.body.innerHTML = original;
+  }, 500);
 };
+
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
 

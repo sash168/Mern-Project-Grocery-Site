@@ -400,7 +400,7 @@ function Orders() {
 
               {/* 🖨 Print Invoice */}
               <button
-                onClick={() => printInvoice(order, currency, user, axios, index + 1)}
+                onClick={() => printInvoice(order)}
                 // onClick={() => printThermalBill(order)}
                 className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
               >
