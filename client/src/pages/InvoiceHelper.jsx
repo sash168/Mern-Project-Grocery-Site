@@ -88,8 +88,9 @@ export const printInvoice = (order) => {
 
   const now = new Date();
 
+  // 🧾 Build bill text
   let bill = `
-      S3 Retail Hub
+S3 Retail Hub
 ------------------------------
 Invoice: ${now.getTime()}
 Date: ${now.toLocaleDateString("en-IN")}
@@ -97,28 +98,31 @@ Customer: ${order.customerName || "Guest"}
 ------------------------------
 `;
 
-  order.items.forEach(i => {
+  order.items.forEach((i) => {
     const name = (i.product?.name || i.name).slice(0, 20);
     const price = (i.product?.offerPrice || i.offerPrice) * i.quantity;
-    bill += `${name} x${i.quantity}   ₹${price}\n`;
+    bill += `${name} x${i.quantity}    ₹${price}\n`;
   });
 
   bill += `
 ------------------------------
 Total: ₹${order.amount}
 ------------------------------
-    Thank you! Visit again
+Thank you! Visit again
 `;
 
-  // ✅ CREATE TEMP PRINT NODE
+  // 🖨️ Create hidden print container
   const printDiv = document.createElement("div");
+  printDiv.id = "print-area";
   printDiv.style.position = "fixed";
-  printDiv.style.left = "-9999px";
+  printDiv.style.left = "-10000px";
+
   printDiv.innerHTML = `
     <pre style="
       font-family: monospace;
       font-size: 12px;
       padding: 12px;
+      width: 300px;
     ">
 ${bill}
     </pre>
@@ -126,19 +130,16 @@ ${bill}
 
   document.body.appendChild(printDiv);
 
-  // ✅ PRINT ONLY THAT NODE
-  const printContents = printDiv.innerHTML;
-  const originalContents = document.body.innerHTML;
+  // 🖨️ Print only bill content
+  const originalHTML = document.body.innerHTML;
+  document.body.innerHTML = printDiv.innerHTML;
 
-  document.body.innerHTML = printContents;
   window.print();
 
-  // ✅ RESTORE SAFELY
-  document.body.innerHTML = originalContents;
+  // 🔄 Restore page
+  document.body.innerHTML = originalHTML;
   document.body.removeChild(printDiv);
 };
-
-
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
 
