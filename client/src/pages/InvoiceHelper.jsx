@@ -88,58 +88,58 @@ export const printInvoice = (order) => {
 
   const now = new Date();
 
-  // 🧾 Build bill text
-  let bill = `
+  const bill = `
 S3 Retail Hub
 ------------------------------
 Invoice: ${now.getTime()}
 Date: ${now.toLocaleDateString("en-IN")}
 Customer: ${order.customerName || "Guest"}
 ------------------------------
-`;
-
-  order.items.forEach((i) => {
-    const name = (i.product?.name || i.name).slice(0, 20);
-    const price = (i.product?.offerPrice || i.offerPrice) * i.quantity;
-    bill += `${name} x${i.quantity}    ₹${price}\n`;
-  });
-
-  bill += `
+${order.items.map(i => {
+  const name = (i.product?.name || i.name).slice(0, 20);
+  const price = (i.product?.offerPrice || i.offerPrice) * i.quantity;
+  return `${name} x${i.quantity}   ₹${price}`;
+}).join("\n")}
 ------------------------------
 Total: ₹${order.amount}
 ------------------------------
 Thank you! Visit again
 `;
 
-  // 🖨️ Create hidden print container
-  const printDiv = document.createElement("div");
-  printDiv.id = "print-area";
-  printDiv.style.position = "fixed";
-  printDiv.style.left = "-10000px";
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
+  document.body.appendChild(iframe);
 
-  printDiv.innerHTML = `
-    <pre style="
-      font-family: monospace;
-      font-size: 12px;
-      padding: 12px;
-      width: 300px;
-    ">
-${bill}
-    </pre>
-  `;
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <html>
+      <head>
+        <style>
+          @page { size: 58mm auto; margin: 0; }
+          body {
+            font-family: monospace;
+            font-size: 12px;
+            width: 58mm;
+            margin: 0;
+            padding: 8px;
+          }
+          pre { white-space: pre-wrap; }
+        </style>
+      </head>
+      <body>
+        <pre>${bill}</pre>
+      </body>
+    </html>
+  `);
+  doc.close();
 
-  document.body.appendChild(printDiv);
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
 
-  // 🖨️ Print only bill content
-  const originalHTML = document.body.innerHTML;
-  document.body.innerHTML = printDiv.innerHTML;
-
-  window.print();
-
-  // 🔄 Restore page
-  document.body.innerHTML = originalHTML;
-  document.body.removeChild(printDiv);
+  setTimeout(() => document.body.removeChild(iframe), 1000);
 };
+
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
 
