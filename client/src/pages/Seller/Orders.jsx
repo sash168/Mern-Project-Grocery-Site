@@ -4,6 +4,7 @@ import { assets } from '../../assets/assets';
 import { toast } from 'sonner';
 import { printInvoice, printThermalBill } from '../InvoiceHelper';
 import { buildBillText } from '../buildBill';
+import PrintBill from '../PrintBill';
 
 function Orders() {
   const { currency, axios, navigate, user } = useAppContext();
@@ -411,7 +412,8 @@ function Orders() {
 
               {/* 🖨 Print Invoice */}
               <button
-                onClick={() => handlePrint(order)}
+                // onClick={() => handlePrint(order)}
+                onClick={() => PrintBill()}
                 // onClick={() => printInvoice(order)}
                 // onClick={() => printThermalBill(order)}
                 className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
