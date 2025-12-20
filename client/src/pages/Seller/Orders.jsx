@@ -3,6 +3,7 @@ import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import { toast } from 'sonner';
 import { printInvoice, printThermalBill } from '../InvoiceHelper';
+import { buildBillText } from '../buildBill';
 
 function Orders() {
   const { currency, axios, navigate, user } = useAppContext();
@@ -171,6 +172,16 @@ function Orders() {
     } finally {
       setLoadingDelivery(prev => ({ ...prev, [orderId]: false }));
     }
+  };
+
+  const handlePrint = () => {
+    const bill = buildBillText(order);
+
+    // store temporarily
+    sessionStorage.setItem("PRINT_BILL", bill);
+
+    // open clean print page
+    window.location.href = "/print";
   };
 
 

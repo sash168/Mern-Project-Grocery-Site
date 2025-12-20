@@ -20,6 +20,7 @@ import Orders from './pages/Seller/Orders';
 import Loading from './components/Loading';
 import ContactUs from './pages/ContactUs';
 import { Toaster } from "sonner";
+import PrintBill from './pages/PrintBill';
 
 function App() {
 
@@ -42,6 +43,7 @@ function App() {
           <Route path='/loader' element={<Loading />}></Route>
           <Route path='/contact' element={<ContactUs />}></Route>
           <Route path='/login' element={<Login />} />
+          <Route path="/print" element={<PrintBill />} /> 
           <Route path='/seller' element={isSeller ? <SellerLayout/> :  <SellerLogin/>}>
             <Route index element={isSeller ? <AddProduct /> : null} />
             <Route path='product-list' element={<ProductList/>} />
