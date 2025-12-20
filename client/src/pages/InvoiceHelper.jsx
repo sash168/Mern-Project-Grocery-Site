@@ -152,9 +152,15 @@ Thank you! Visit again
 export const printInvoiceMobileFriendly = (order) => {
   if (!order || !order.items?.length) return;
 
+  // ✅ DESTROY PREVIOUS IFRAME FIRST (CRITICAL FIX)
+  const existingFrame = document.querySelector('iframe[data-print-bill]');
+  if (existingFrame) {
+    existingFrame.remove();
+  }
+
   const now = new Date();
+  const uniqueId = `print-${Date.now()}`; // Unique ID per print
   
-  // ✅ BILL GENERATION LOGIC (your original code)
   let billContent = `S3 Retail Hub\n${'='.repeat(25)}\nInvoice: ${now.getTime()}\nDate: ${now.toLocaleDateString("en-IN")}\nCustomer: ${order.customerName || "Guest"}\n${'='.repeat(25)}\n`;
 
   let subtotal = 0;
@@ -169,53 +175,86 @@ export const printInvoiceMobileFriendly = (order) => {
 
   billContent += `${'='.repeat(25)}\nSubtotal: ₹${subtotal.toFixed(2)}\nTotal: ₹${order.amount?.toFixed(2) || subtotal.toFixed(2)}\n${'='.repeat(25)}\nThank you! Visit again\n`;
 
-  // ✅ MOBILE-FRIENDLY PRINT IFRAME
+  // ✅ NEW IFRAME WITH UNIQUE ID AND SIZE PARAMETER
   const printFrame = document.createElement('iframe');
+  printFrame.id = uniqueId;
+  printFrame.setAttribute('data-print-bill', 'true');
   printFrame.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    border: none; z-index: 9999; background: white;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    border: none; z-index: 99999; background: white;
   `;
   document.body.appendChild(printFrame);
 
-  const doc = printFrame.contentDocument;
+  const doc = printFrame.contentDocument || printFrame.contentWindow.document;
   doc.open();
   doc.write(`
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Print Bill</title>
+        <title>Print Bill ${uniqueId}</title>
         <style>
+          * { box-sizing: border-box; }
+          @page { 
+            size: 58mm auto !important; 
+            margin: 0 !important; 
+            padding: 0 !important;
+          }
           @media print {
-            @page { size: 58mm auto; margin: 0; }
+            body { 
+              -webkit-print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
           }
           body {
-            margin: 0; padding: 8px; width: 58mm; font-size: 12px;
-            font-family: 'Courier New', monospace; line-height: 1.2;
+            margin: 0 !important; 
+            padding: 8px !important; 
+            width: 58mm !important; 
+            font-size: 12px !important;
+            font-family: 'Courier New', 'Lucida Console', monospace !important;
+            line-height: 1.2 !important;
+            background: white !important;
           }
-          pre { white-space: pre-wrap; margin: 0; }
+          pre { 
+            white-space: pre-wrap !important; 
+            margin: 0 !important; 
+            font-family: inherit !important;
+          }
         </style>
       </head>
       <body>
         <pre>${billContent}</pre>
         <script>
-          window.onload = () => {
-            window.focus();
-            window.print();
-          };
+          (function() {
+            window.onload = function() {
+              // Focus and print with delay for mobile
+              setTimeout(() => {
+                window.focus();
+                window.print();
+              }, 100);
+              
+              // Auto-cleanup after print (user prints or cancels)
+              const cleanup = () => {
+                setTimeout(() => {
+                  if (window && window.close) window.close();
+                }, 500);
+              };
+              
+              window.onafterprint = cleanup;
+              window.onbeforeprint = cleanup;
+            };
+          })();
         <\/script>
       </body>
     </html>
   `);
   doc.close();
 
-  printFrame.onload = () => {
-    printFrame.contentWindow.focus();
-    printFrame.contentWindow.print();
-    // Cleanup after print dialog closes
-    setTimeout(() => document.body.removeChild(printFrame), 2000);
-  };
+  // ✅ FORCE CLEANUP REGARDLESS OF PRINT STATUS
+  setTimeout(() => {
+    const frame = document.getElementById(uniqueId);
+    if (frame) frame.remove();
+  }, 3000);
 };
-
 
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {

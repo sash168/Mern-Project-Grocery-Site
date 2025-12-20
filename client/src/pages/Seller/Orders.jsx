@@ -175,43 +175,6 @@ function Orders() {
     }
   };
 
-  // const handlePrint = (order) => {
-  //   const bill = buildBillText(order);
-
-  //   // store temporarily
-  //   sessionStorage.setItem("PRINT_BILL", bill);
-
-  //   navigate("/print");
-
-  // };
-
-  const printMiniBill = (order) => {
-  let bill = '';
-  bill += "GROCERY STORE\n";
-  bill += "Invoice: INV" + Date.now() + "\n";
-  bill += "Date: " + new Date().toLocaleString() + "\n";
-  bill += "--------------------\n";
-
-  order.items.forEach(item => {
-    bill += `${item.name.slice(0,15)}\n`;
-    bill += `x${item.quantity}  ${currency}${(item.offerPrice * item.quantity).toFixed(2)}\n`;
-  });
-
-  bill += "--------------------\n";
-  const subTotal = getCardAmount();
-  const tax = subTotal * 0.02;
-  const total = subTotal + tax;
-  bill += `Subtotal: ${currency}${subTotal.toFixed(2)}\n`;
-  bill += `Tax: ${currency}${tax.toFixed(2)}\n`;
-  bill += `TOTAL: ${currency}${total.toFixed(2)}\n`;
-  bill += "Thank you!\n\n\n";
-
-  // Send `bill` string to Bluetooth printer SDK
-  console.log(bill);
-};
-
-
-
   return (
     <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll">
       <div className="md:p-10 p-4 space-y-4">
