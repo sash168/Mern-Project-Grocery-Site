@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import { toast } from 'sonner';
-import { printInvoice, printThermalBill } from '../InvoiceHelper';
+import { printInvoice, printInvoiceMobileFriendly, printThermalBill } from '../InvoiceHelper';
 import { buildBillText } from '../buildBill';
 import PrintBill from '../PrintBill';
 
@@ -175,15 +175,41 @@ function Orders() {
     }
   };
 
-  const handlePrint = (order) => {
-    const bill = buildBillText(order);
+  // const handlePrint = (order) => {
+  //   const bill = buildBillText(order);
 
-    // store temporarily
-    sessionStorage.setItem("PRINT_BILL", bill);
+  //   // store temporarily
+  //   sessionStorage.setItem("PRINT_BILL", bill);
 
-    navigate("/print");
+  //   navigate("/print");
 
-  };
+  // };
+
+  const printMiniBill = (order) => {
+  let bill = '';
+  bill += "GROCERY STORE\n";
+  bill += "Invoice: INV" + Date.now() + "\n";
+  bill += "Date: " + new Date().toLocaleString() + "\n";
+  bill += "--------------------\n";
+
+  order.items.forEach(item => {
+    bill += `${item.name.slice(0,15)}\n`;
+    bill += `x${item.quantity}  ${currency}${(item.offerPrice * item.quantity).toFixed(2)}\n`;
+  });
+
+  bill += "--------------------\n";
+  const subTotal = getCardAmount();
+  const tax = subTotal * 0.02;
+  const total = subTotal + tax;
+  bill += `Subtotal: ${currency}${subTotal.toFixed(2)}\n`;
+  bill += `Tax: ${currency}${tax.toFixed(2)}\n`;
+  bill += `TOTAL: ${currency}${total.toFixed(2)}\n`;
+  bill += "Thank you!\n\n\n";
+
+  // Send `bill` string to Bluetooth printer SDK
+  console.log(bill);
+};
+
 
 
   return (
@@ -412,8 +438,8 @@ function Orders() {
 
               {/* 🖨 Print Invoice */}
               <button
-                // onClick={() => handlePrint(order)}
-                onClick={() => PrintBill()}
+                onClick={() => printInvoiceMobileFriendly(order)}
+                // onClick={() => PrintBill()}
                 // onClick={() => printInvoice(order)}
                 // onClick={() => printThermalBill(order)}
                 className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"

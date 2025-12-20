@@ -149,6 +149,73 @@ Thank you! Visit again
   printWindow.document.close();
 };
 
+export const printInvoiceMobileFriendly = (order) => {
+  if (!order || !order.items?.length) return;
+
+  const now = new Date();
+  
+  // ✅ BILL GENERATION LOGIC (your original code)
+  let billContent = `S3 Retail Hub\n${'='.repeat(25)}\nInvoice: ${now.getTime()}\nDate: ${now.toLocaleDateString("en-IN")}\nCustomer: ${order.customerName || "Guest"}\n${'='.repeat(25)}\n`;
+
+  let subtotal = 0;
+  order.items.forEach(i => {
+    const name = (i.product?.name || i.name || 'Item').slice(0, 20).padEnd(20);
+    const unitPrice = i.product?.offerPrice || i.offerPrice || 0;
+    const qty = i.quantity || 1;
+    const lineTotal = unitPrice * qty;
+    subtotal += lineTotal;
+    billContent += `${name} x${qty.toString().padStart(2)} ₹${lineTotal.toFixed(2)}\n`;
+  });
+
+  billContent += `${'='.repeat(25)}\nSubtotal: ₹${subtotal.toFixed(2)}\nTotal: ₹${order.amount?.toFixed(2) || subtotal.toFixed(2)}\n${'='.repeat(25)}\nThank you! Visit again\n`;
+
+  // ✅ MOBILE-FRIENDLY PRINT IFRAME
+  const printFrame = document.createElement('iframe');
+  printFrame.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    border: none; z-index: 9999; background: white;
+  `;
+  document.body.appendChild(printFrame);
+
+  const doc = printFrame.contentDocument;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Print Bill</title>
+        <style>
+          @media print {
+            @page { size: 58mm auto; margin: 0; }
+          }
+          body {
+            margin: 0; padding: 8px; width: 58mm; font-size: 12px;
+            font-family: 'Courier New', monospace; line-height: 1.2;
+          }
+          pre { white-space: pre-wrap; margin: 0; }
+        </style>
+      </head>
+      <body>
+        <pre>${billContent}</pre>
+        <script>
+          window.onload = () => {
+            window.focus();
+            window.print();
+          };
+        <\/script>
+      </body>
+    </html>
+  `);
+  doc.close();
+
+  printFrame.onload = () => {
+    printFrame.contentWindow.focus();
+    printFrame.contentWindow.print();
+    // Cleanup after print dialog closes
+    setTimeout(() => document.body.removeChild(printFrame), 2000);
+  };
+};
+
 
 
 export const printThermalBill = (order, companyName = "S3 Retail Hub", serial = 1) => {
