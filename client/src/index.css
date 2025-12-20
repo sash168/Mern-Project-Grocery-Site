@@ -5,6 +5,17 @@
   font-family: "Outfit", sans-serif;
 }
 
+@media print {
+  #print-btn {
+    display: none !important;
+  }
+
+  body {
+    margin: 0;
+  }
+}
+
+
 @theme{
   --color-primary: #4fbf8b;
   --color-dull-primary: #44ae7c;

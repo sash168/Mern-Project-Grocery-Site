@@ -10,7 +10,12 @@ const PrintBill = () => {
 
   return (
     <div style={styles.page}>
-      <button onClick={() => window.print()} style={styles.btn}>
+      {/* USER MUST TAP THIS */}
+      <button
+        id="print-btn"
+        onClick={() => window.print()}
+        style={styles.btn}
+      >
         🖨 Print Bill
       </button>
 

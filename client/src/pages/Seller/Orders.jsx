@@ -180,8 +180,8 @@ function Orders() {
     // store temporarily
     sessionStorage.setItem("PRINT_BILL", bill);
 
-    // open clean print page
-    window.location.href = "/print";
+    navigate("/print");
+
   };
 
 
