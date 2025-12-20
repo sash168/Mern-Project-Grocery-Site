@@ -10,10 +10,13 @@ const PrintBill = () => {
 
   return (
     <div style={styles.page}>
-      {/* USER MUST TAP THIS */}
       <button
         id="print-btn"
-        onClick={() => window.print()}
+        onClick={() => {
+          setTimeout(() => {
+            window.print();
+          }, 100);
+        }}
         style={styles.btn}
       >
         🖨 Print Bill
