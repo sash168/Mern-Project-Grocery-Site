@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import { toast } from 'sonner';
 import { printInvoice, printInvoiceMobileFriendly, printThermalBill } from '../InvoiceHelper';
 import { buildBillText } from '../buildBill';
 import PrintBill from '../PrintBill';
+import { useReactToPrint } from 'react-to-print'; // ← NEW
 
 function Orders() {
   const { currency, axios, navigate, user } = useAppContext();
@@ -18,6 +19,7 @@ function Orders() {
   const [filterDelivery, setFilterDelivery] = useState('all'); // all | delivered | pending
   const [filterPayment, setFilterPayment] = useState('all'); // all | unpaid | paid
   const [loadingDelivery, setLoadingDelivery] = useState({});
+  const componentRefs = useRef({}); // Store refs per order
 
   const fetchOrders = async () => {
     try {
@@ -420,23 +422,19 @@ const handlePrint = async (order) => {
                 </button>
               )}
 
-{printingOrderId === order._id ? (
-  <div className="print-bill print-bill-container">
-    <div className="print-only-content">
-      <pre style={{ 
-        whiteSpace: 'pre-wrap', 
-        margin: 0, 
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        lineHeight: 1.1
-      }}>
+{order._id in componentRefs.current ? (
+  <div 
+    ref={el => { if (el) componentRefs.current[order._id] = el; }}
+    className="hidden print:!block print-bill-container"
+  >
+    <pre className="print-bill-text">
 S3 Retail Hub
 =========================
 Invoice: {new Date().getTime()}
 Date: {new Date().toLocaleDateString("en-IN")}
 Customer: {order.address?.name || "Guest"}
 =========================
-{order.items.map(item => {
+{order.items.map((item, idx) => {
   const name = (item.product?.name || 'Item').slice(0, 20);
   const price = (item.product?.offerPrice || 0) * (item.quantity || 1);
   return `${name.padEnd(20)} x${(item.quantity || 1).toString().padStart(2)} ₹${price.toFixed(2)}\n`;
@@ -445,19 +443,18 @@ Customer: {order.address?.name || "Guest"}
 Total: ₹{order.amount?.toFixed(2)}
 =========================
 Thank you! Visit again
-      </pre>
-    </div>
+    </pre>
   </div>
-) : (
-  <button
-    onClick={() => handlePrint(order)}
-    className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
-  >
-    Print Invoice
-  </button>
-)}
+) : null}
 
-
+<button
+  onClick={useReactToPrint({
+    content: () => componentRefs.current[order._id] || null,
+  })}
+  className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
+>
+  Print Invoice
+</button>
 
             </div>
           </div>

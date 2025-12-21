@@ -6,11 +6,11 @@
 }
 
 @media print {
-  * { visibility: hidden !important; }
+  .hidden { display: block !important; }
   
-  .print-bill-container,
-  .print-bill-container * {
-    visibility: visible !important;
+  body * { visibility: hidden !important; }
+  .print-bill-container, .print-bill-container * { 
+    visibility: visible !important; 
   }
   
   .print-bill-container {
@@ -18,18 +18,19 @@
     left: 0 !important;
     top: 0 !important;
     width: 58mm !important;
-    height: auto !important;
-    margin: 0 !important;
     padding: 8px !important;
+    margin: 0 !important;
+    background: white !important;
   }
   
-  .print-only-content {
+  .print-bill-text {
     font-family: 'Courier New', monospace !important;
     font-size: 12px !important;
     line-height: 1.1 !important;
+    white-space: pre-wrap !important;
+    margin: 0 !important;
   }
 }
-
 
 @theme{
   --color-primary: #4fbf8b;
