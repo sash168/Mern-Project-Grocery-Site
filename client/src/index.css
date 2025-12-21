@@ -6,27 +6,58 @@
 }
 
 @media print {
-  .hidden { display: block !important; }
-  body * { visibility: hidden !important; }
-  .print-bill-container, .print-bill-container * { 
-    visibility: visible !important; 
+  /* 🔒 RESET EVERYTHING - OVERRIDE GLOBAL STYLES */
+  * {
+    font-family: initial !important;
+    font-size: initial !important;
+    line-height: initial !important;
+    font-weight: normal !important;
   }
+  
+  /* HIDE EVERYTHING */
+  body * { 
+    visibility: hidden !important; 
+    display: none !important;
+  }
+  
+  /* SHOW ONLY BILL */
+  .print-bill-container,
+  .print-bill-container * { 
+    visibility: visible !important; 
+    display: block !important;
+  }
+  
+  /* BILL CONTAINER */
   .print-bill-container {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 58mm !important;
-    padding: 8px !important;
     margin: 0 !important;
+    padding: 8px !important;
+    background: white !important;
+    box-shadow: none !important;
   }
+  
+  /* BILL TEXT - BULLETPROOF */
   .print-bill-text {
-    font-family: 'Courier New', monospace !important;
+    font-family: 'Courier New', 'Lucida Console', Consolas, monospace !important;
     font-size: 12px !important;
     line-height: 1.1 !important;
     white-space: pre-wrap !important;
     margin: 0 !important;
+    padding: 0 !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+  }
+  
+  @page {
+    size: 58mm auto !important;
+    margin: 0 !important;
   }
 }
+
 
 @theme{
   --color-primary: #4fbf8b;

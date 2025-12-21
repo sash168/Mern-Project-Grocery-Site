@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { printInvoice, printInvoiceMobileFriendly, printThermalBill } from '../InvoiceHelper';
 import { buildBillText } from '../buildBill';
 import PrintBill from '../PrintBill';
-import { useReactToPrint } from 'react-to-print'; // ← NEW
 
 function Orders() {
   const { currency, axios, navigate, user } = useAppContext();
@@ -176,27 +175,6 @@ function Orders() {
       setLoadingDelivery(prev => ({ ...prev, [orderId]: false }));
     }
   };
-
-const [printingOrderId, setPrintingOrderId] = useState(null);
-
-const handlePrint = async (order) => {
-  setPrintingOrderId(order._id);
-  
-  // ⏱️ WAIT FOR RERENDER + FORCE REFLOW
-  await new Promise(resolve => requestAnimationFrame(resolve));
-  await new Promise(resolve => setTimeout(resolve, 300)); // Let React render
-  
-  // 🎯 TRIGGER PRINT
-  window.focus();
-  window.print();
-  
-  // 🧹 CLEANUP AFTER PRINT
-  const cleanup = () => {
-    setTimeout(() => setPrintingOrderId(null), 500);
-  };
-  window.onafterprint = cleanup;
-  window.onbeforeprint = cleanup;
-};
 
   return (
     <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll">
@@ -421,7 +399,6 @@ const handlePrint = async (order) => {
                   {loadingDelivery[order._id] ? 'Processing...' : 'Mark Delivered'}
                 </button>
               )}
-
 {/* 🖨 HIDDEN BILL REF - ALWAYS RENDERED */}
 <div 
   ref={el => { if (el) componentRefs.current[order._id] = el; }}
@@ -459,6 +436,7 @@ Thank you! Visit again
 >
   Print Invoice
 </button>
+
 
 
             </div>
