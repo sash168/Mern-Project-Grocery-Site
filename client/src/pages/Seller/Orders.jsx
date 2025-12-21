@@ -175,18 +175,26 @@ function Orders() {
     }
   };
 
-// Replace your state and handler with this:
-const [printingOrderId, setPrintingOrderId] = useState(null); // ← per order
+const [printingOrderId, setPrintingOrderId] = useState(null);
 
-const handlePrint = (order) => {
-  setPrintingOrderId(order._id); // Show bill for THIS order only
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => setPrintingOrderId(null), 1500); // Reset after print
-  }, 200);
+const handlePrint = async (order) => {
+  setPrintingOrderId(order._id);
+  
+  // ⏱️ WAIT FOR RERENDER + FORCE REFLOW
+  await new Promise(resolve => requestAnimationFrame(resolve));
+  await new Promise(resolve => setTimeout(resolve, 300)); // Let React render
+  
+  // 🎯 TRIGGER PRINT
+  window.focus();
+  window.print();
+  
+  // 🧹 CLEANUP AFTER PRINT
+  const cleanup = () => {
+    setTimeout(() => setPrintingOrderId(null), 500);
+  };
+  window.onafterprint = cleanup;
+  window.onbeforeprint = cleanup;
 };
-
-
 
   return (
     <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll">
@@ -412,30 +420,35 @@ const handlePrint = (order) => {
                 </button>
               )}
 
-              {/* 🖨 Print Invoice - INSIDE the order map */}
 {printingOrderId === order._id ? (
-  // 🧾 BILL FOR THIS ORDER ONLY
   <div className="print-bill print-bill-container">
-    <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
+    <div className="print-only-content">
+      <pre style={{ 
+        whiteSpace: 'pre-wrap', 
+        margin: 0, 
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        lineHeight: 1.1
+      }}>
 S3 Retail Hub
-{`=${'='.repeat(23)}`}
+=========================
 Invoice: {new Date().getTime()}
 Date: {new Date().toLocaleDateString("en-IN")}
 Customer: {order.address?.name || "Guest"}
-{`=${'='.repeat(23)}`}
+=========================
 {order.items.map(item => {
   const name = (item.product?.name || 'Item').slice(0, 20);
   const price = (item.product?.offerPrice || 0) * (item.quantity || 1);
   return `${name.padEnd(20)} x${(item.quantity || 1).toString().padStart(2)} ₹${price.toFixed(2)}\n`;
 }).join('')}
-{`=${'='.repeat(23)}`}
+=========================
 Total: ₹{order.amount?.toFixed(2)}
-{`=${'='.repeat(23)}`}
+=========================
 Thank you! Visit again
-    </pre>
+      </pre>
+    </div>
   </div>
 ) : (
-  // Normal button
   <button
     onClick={() => handlePrint(order)}
     className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
