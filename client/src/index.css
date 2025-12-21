@@ -7,12 +7,10 @@
 
 @media print {
   .hidden { display: block !important; }
-  
   body * { visibility: hidden !important; }
   .print-bill-container, .print-bill-container * { 
     visibility: visible !important; 
   }
-  
   .print-bill-container {
     position: absolute !important;
     left: 0 !important;
@@ -20,9 +18,7 @@
     width: 58mm !important;
     padding: 8px !important;
     margin: 0 !important;
-    background: white !important;
   }
-  
   .print-bill-text {
     font-family: 'Courier New', monospace !important;
     font-size: 12px !important;

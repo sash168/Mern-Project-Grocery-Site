@@ -422,12 +422,12 @@ const handlePrint = async (order) => {
                 </button>
               )}
 
-{order._id in componentRefs.current ? (
-  <div 
-    ref={el => { if (el) componentRefs.current[order._id] = el; }}
-    className="hidden print:!block print-bill-container"
-  >
-    <pre className="print-bill-text">
+{/* 🖨 HIDDEN BILL REF - ALWAYS RENDERED */}
+<div 
+  ref={el => { if (el) componentRefs.current[order._id] = el; }}
+  className="hidden print:!block print-bill-container"
+>
+  <pre className="print-bill-text">
 S3 Retail Hub
 =========================
 Invoice: {new Date().getTime()}
@@ -443,18 +443,23 @@ Customer: {order.address?.name || "Guest"}
 Total: ₹{order.amount?.toFixed(2)}
 =========================
 Thank you! Visit again
-    </pre>
-  </div>
-) : null}
+  </pre>
+</div>
 
+{/* 🖨 PRINT BUTTON */}
 <button
-  onClick={useReactToPrint({
-    content: () => componentRefs.current[order._id] || null,
-  })}
+  onClick={() => {
+    const billElement = componentRefs.current[order._id];
+    if (billElement) {
+      window.scrollTo(0, 0);
+      setTimeout(() => window.print(), 100);
+    }
+  }}
   className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
 >
   Print Invoice
 </button>
+
 
             </div>
           </div>
