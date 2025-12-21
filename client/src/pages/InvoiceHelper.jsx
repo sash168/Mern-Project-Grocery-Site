@@ -152,108 +152,129 @@ Thank you! Visit again
 export const printInvoiceMobileFriendly = (order) => {
   if (!order || !order.items?.length) return;
 
-  // ✅ DESTROY PREVIOUS IFRAME FIRST (CRITICAL FIX)
-  const existingFrame = document.querySelector('iframe[data-print-bill]');
-  if (existingFrame) {
-    existingFrame.remove();
-  }
+  // 🧹 CLEANUP PREVIOUS FRAMES
+  document.querySelectorAll('iframe[data-print-bill]').forEach(frame => frame.remove());
 
   const now = new Date();
-  const uniqueId = `print-${Date.now()}`; // Unique ID per print
-  
-  let billContent = `S3 Retail Hub\n${'='.repeat(25)}\nInvoice: ${now.getTime()}\nDate: ${now.toLocaleDateString("en-IN")}\nCustomer: ${order.customerName || "Guest"}\n${'='.repeat(25)}\n`;
+  let billContent = `S3 Retail Hub\n${'='.repeat(25)}\n`;
+  billContent += `Invoice: ${now.getTime()}\n`;
+  billContent += `Date: ${now.toLocaleDateString("en-IN")}\n`;
+  billContent += `Customer: ${order.address?.name || "Guest"}\n`;
+  billContent += `${'='.repeat(25)}\n`;
 
   let subtotal = 0;
-  order.items.forEach(i => {
-    const name = (i.product?.name || i.name || 'Item').slice(0, 20).padEnd(20);
-    const unitPrice = i.product?.offerPrice || i.offerPrice || 0;
-    const qty = i.quantity || 1;
-    const lineTotal = unitPrice * qty;
-    subtotal += lineTotal;
-    billContent += `${name} x${qty.toString().padStart(2)} ₹${lineTotal.toFixed(2)}\n`;
+  order.items.forEach(item => {
+    const name = (item.product?.name || item.name || 'Item').slice(0, 20).padEnd(20);
+    const price = (item.product?.offerPrice || item.offerPrice || 0) * (item.quantity || 1);
+    subtotal += price;
+    billContent += `${name} x${(item.quantity || 1).toString().padStart(2)} ₹${price.toFixed(2)}\n`;
   });
 
-  billContent += `${'='.repeat(25)}\nSubtotal: ₹${subtotal.toFixed(2)}\nTotal: ₹${order.amount?.toFixed(2) || subtotal.toFixed(2)}\n${'='.repeat(25)}\nThank you! Visit again\n`;
+  billContent += `${'='.repeat(25)}\n`;
+  billContent += `Total: ₹${order.amount?.toFixed(2) || subtotal.toFixed(2)}\n`;
+  billContent += `${'='.repeat(25)}\nThank you! Visit again\n`;
 
-  // ✅ NEW IFRAME WITH UNIQUE ID AND SIZE PARAMETER
+  // 🎯 BULLETPROOF IFRAME WITH ISOLATED STYLES
   const printFrame = document.createElement('iframe');
-  printFrame.id = uniqueId;
   printFrame.setAttribute('data-print-bill', 'true');
   printFrame.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    border: none; z-index: 99999; background: white;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    width: 100vw !important; height: 100vh !important;
+    border: none !important; z-index: 999999 !important;
+    background: white !important; display: block !important;
   `;
   document.body.appendChild(printFrame);
 
-  const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+  const doc = printFrame.contentDocument || printFrame.contentWindow?.document;
+  if (!doc) return;
+
   doc.open();
   doc.write(`
     <!DOCTYPE html>
-    <html>
+    <html style="margin:0;padding:0;height:100%;">
       <head>
-        <title>Print Bill ${uniqueId}</title>
+        <title>PRINT BILL - DO NOT CLOSE</title>
+        <meta name="viewport" content="width=58mm, initial-scale=1">
         <style>
-          * { box-sizing: border-box; }
-          @page { 
-            size: 58mm auto !important; 
-            margin: 0 !important; 
+          /* 🔒 ISOLATE FROM PARENT CSS */
+          html, body, pre, * {
+            all: revert !important;
+            box-sizing: border-box !important;
+          }
+          
+          /* 📄 PAGE SIZE */
+          @page {
+            size: 58mm auto !important;
+            margin: 0 !important;
             padding: 0 !important;
           }
+          
+          /* 🖨 PRINT ONLY */
           @media print {
-            body { 
+            body {
               -webkit-print-color-adjust: exact !important;
-              color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              margin: 0 !important;
+              padding: 0 !important;
             }
           }
+          
+          /* 📱 MOBILE + DESKTOP */
           body {
-            margin: 0 !important; 
-            padding: 8px !important; 
-            width: 58mm !important; 
+            margin: 0 !important;
+            padding: 6px 8px !important;
+            width: 58mm !important;
+            max-width: 58mm !important;
+            font-family: 'Courier New', 'Lucida Console', Consolas, monospace !important;
             font-size: 12px !important;
-            font-family: 'Courier New', 'Lucida Console', monospace !important;
-            line-height: 1.2 !important;
+            line-height: 1.15 !important;
             background: white !important;
+            color: black !important;
+            overflow: hidden !important;
           }
-          pre { 
-            white-space: pre-wrap !important; 
-            margin: 0 !important; 
+          
+          pre {
+            margin: 0 !important;
+            padding: 0 !important;
+            white-space: pre-wrap !important;
             font-family: inherit !important;
+            font-size: inherit !important;
+            line-height: inherit !important;
+            font-weight: normal !important;
           }
         </style>
       </head>
       <body>
         <pre>${billContent}</pre>
         <script>
-          (function() {
-            window.onload = function() {
-              // Focus and print with delay for mobile
-              setTimeout(() => {
-                window.focus();
-                window.print();
-              }, 100);
-              
-              // Auto-cleanup after print (user prints or cancels)
-              const cleanup = () => {
-                setTimeout(() => {
-                  if (window && window.close) window.close();
-                }, 500);
-              };
-              
-              window.onafterprint = cleanup;
-              window.onbeforeprint = cleanup;
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+            }, 200);
+            
+            // Cleanup handlers
+            window.onafterprint = function() {
+              setTimeout(function() {
+                if (parent && parent.document) {
+                  const frame = parent.document.querySelector('iframe[data-print-bill]');
+                  if (frame) frame.remove();
+                }
+              }, 500);
             };
-          })();
+          });
         <\/script>
       </body>
     </html>
   `);
   doc.close();
 
-  // ✅ FORCE CLEANUP REGARDLESS OF PRINT STATUS
+  // 🔄 FORCE CLEANUP
   setTimeout(() => {
-    const frame = document.getElementById(uniqueId);
+    const frame = document.querySelector('iframe[data-print-bill]');
     if (frame) frame.remove();
-  }, 3000);
+  }, 5000);
 };
 
 
