@@ -5,15 +5,28 @@
   font-family: "Outfit", sans-serif;
 }
 
+/* Add this to your global CSS or Orders component */
 @media print {
-  #print-btn {
-    display: none !important;
+  body * { visibility: hidden; }
+  
+  /* Show ONLY the bill */
+  .print-bill-container,
+  .print-bill-container * {
+    visibility: visible !important;
   }
-
-  body {
-    margin: 0;
+  
+  .print-bill-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 58mm !important;
+    margin: 0 !important;
+    padding: 8px !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 12px !important;
   }
 }
+
 
 
 @theme{

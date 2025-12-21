@@ -175,6 +175,19 @@ function Orders() {
     }
   };
 
+  // Add these 2 lines to your Orders component state
+const [isPrinting, setIsPrinting] = useState(false);
+
+// Add this print handler
+const handlePrint = (order) => {
+  setIsPrinting(true); // Enter print mode
+  setTimeout(() => {
+    window.print(); // Trigger print
+    setTimeout(() => setIsPrinting(false), 1000); // Exit print mode
+  }, 100);
+};
+
+
   return (
     <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll">
       <div className="md:p-10 p-4 space-y-4">
@@ -399,16 +412,38 @@ function Orders() {
                 </button>
               )}
 
-              {/* 🖨 Print Invoice */}
-              <button
-                onClick={() => printInvoiceMobileFriendly(order)}
-                // onClick={() => PrintBill()}
-                // onClick={() => printInvoice(order)}
-                // onClick={() => printThermalBill(order)}
-                className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
-              >
-                Print Invoice
-              </button>
+              {isPrinting ? (
+                  // 🧾 PRINT BILL ONLY (shows during print)
+                  <div className="print-bill-container">
+                    <pre style={{whiteSpace: 'pre-wrap'}}>
+                S3 Retail Hub
+                {`=${'='.repeat(23)}`}
+                Invoice: {new Date().getTime()}
+                Date: {new Date().toLocaleDateString("en-IN")}
+                Customer: {order.address?.name || "Guest"}
+                {`=${'='.repeat(23)}`}
+                {order.items.map(item => {
+                  const name = (item.product?.name || 'Item').slice(0, 20);
+                  const price = (item.product?.offerPrice || 0) * (item.quantity || 1);
+                  return `${name.padEnd(20)} x${(item.quantity || 1).toString().padStart(2)} ₹${price.toFixed(2)}\n`;
+                }).join('')}
+                {`=${'='.repeat(23)}`}
+                Total: ₹{order.amount?.toFixed(2)}
+                {`=${'='.repeat(23)}`}
+                Thank you! Visit again
+                    </pre>
+                  </div>
+                ) : (
+                  // 🖨 Normal Print Button (shows normally)
+                  <button
+                    onClick={() => handlePrint(order)}
+                    className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
+                  >
+                    Print Invoice
+                  </button>
+                )}
+
+
             </div>
           </div>
         ))}
