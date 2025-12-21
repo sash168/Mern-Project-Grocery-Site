@@ -175,17 +175,17 @@ function Orders() {
     }
   };
 
-  // Add these 2 lines to your Orders component state
-const [isPrinting, setIsPrinting] = useState(false);
+// Replace your state and handler with this:
+const [printingOrderId, setPrintingOrderId] = useState(null); // ← per order
 
-// Add this print handler
 const handlePrint = (order) => {
-  setIsPrinting(true); // Enter print mode
+  setPrintingOrderId(order._id); // Show bill for THIS order only
   setTimeout(() => {
-    window.print(); // Trigger print
-    setTimeout(() => setIsPrinting(false), 1000); // Exit print mode
-  }, 100);
+    window.print();
+    setTimeout(() => setPrintingOrderId(null), 1500); // Reset after print
+  }, 200);
 };
+
 
 
   return (
@@ -412,36 +412,38 @@ const handlePrint = (order) => {
                 </button>
               )}
 
-              {isPrinting ? (
-                  // 🧾 PRINT BILL ONLY (shows during print)
-                  <div className="print-bill-container">
-                    <pre style={{whiteSpace: 'pre-wrap'}}>
-                S3 Retail Hub
-                {`=${'='.repeat(23)}`}
-                Invoice: {new Date().getTime()}
-                Date: {new Date().toLocaleDateString("en-IN")}
-                Customer: {order.address?.name || "Guest"}
-                {`=${'='.repeat(23)}`}
-                {order.items.map(item => {
-                  const name = (item.product?.name || 'Item').slice(0, 20);
-                  const price = (item.product?.offerPrice || 0) * (item.quantity || 1);
-                  return `${name.padEnd(20)} x${(item.quantity || 1).toString().padStart(2)} ₹${price.toFixed(2)}\n`;
-                }).join('')}
-                {`=${'='.repeat(23)}`}
-                Total: ₹{order.amount?.toFixed(2)}
-                {`=${'='.repeat(23)}`}
-                Thank you! Visit again
-                    </pre>
-                  </div>
-                ) : (
-                  // 🖨 Normal Print Button (shows normally)
-                  <button
-                    onClick={() => handlePrint(order)}
-                    className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
-                  >
-                    Print Invoice
-                  </button>
-                )}
+              {/* 🖨 Print Invoice - INSIDE the order map */}
+{printingOrderId === order._id ? (
+  // 🧾 BILL FOR THIS ORDER ONLY
+  <div className="print-bill print-bill-container">
+    <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
+S3 Retail Hub
+{`=${'='.repeat(23)}`}
+Invoice: {new Date().getTime()}
+Date: {new Date().toLocaleDateString("en-IN")}
+Customer: {order.address?.name || "Guest"}
+{`=${'='.repeat(23)}`}
+{order.items.map(item => {
+  const name = (item.product?.name || 'Item').slice(0, 20);
+  const price = (item.product?.offerPrice || 0) * (item.quantity || 1);
+  return `${name.padEnd(20)} x${(item.quantity || 1).toString().padStart(2)} ₹${price.toFixed(2)}\n`;
+}).join('')}
+{`=${'='.repeat(23)}`}
+Total: ₹{order.amount?.toFixed(2)}
+{`=${'='.repeat(23)}`}
+Thank you! Visit again
+    </pre>
+  </div>
+) : (
+  // Normal button
+  <button
+    onClick={() => handlePrint(order)}
+    className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
+  >
+    Print Invoice
+  </button>
+)}
+
 
 
             </div>
