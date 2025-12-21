@@ -83,69 +83,62 @@ export const downloadInvoicePDF = async (order, currency, user, orderIndex = 1, 
   doc.save(`Invoice_INV${invoiceNo}.pdf`);
 };
 
+// In InvoiceHelper.js - YOUR ORIGINAL FIXED VERSION
 export const printInvoice = (order) => {
-  if (!order) return;
+  if (!order || !order.items?.length) return;
 
   const now = new Date();
+  let bill = `S3 Retail Hub\n${'='.repeat(25)}\n`;
+  bill += `Invoice: ${now.getTime()}\n`;
+  bill += `Date: ${now.toLocaleDateString("en-IN")}\n`;
+  bill += `Customer: ${order.address?.name || "Guest"}\n`;
+  bill += `${'='.repeat(25)}\n`;
 
-  let bill = `
-S3 Retail Hub
-------------------------------
-Invoice: ${now.getTime()}
-Date: ${now.toLocaleDateString("en-IN")}
-Customer: ${order.customerName || "Guest"}
-------------------------------
-`;
-
-  order.items.forEach(i => {
-    const name = (i.product?.name || i.name).slice(0, 20);
-    const price = (i.product?.offerPrice || i.offerPrice) * i.quantity;
-    bill += `${name} x${i.quantity}   ₹${price}\n`;
+  let subtotal = 0;
+  order.items.forEach(item => {
+    const name = (item.product?.name || 'Item').slice(0, 20).padEnd(20);
+    const price = (item.product?.offerPrice || item.offerPrice || 0) * (item.quantity || 1);
+    subtotal += price;
+    bill += `${name}x${(item.quantity || 1).toString().padStart(2)} ₹${price.toFixed(2)}\n`;
   });
 
-  bill += `
-------------------------------
-Total: ₹${order.amount}
-------------------------------
-Thank you! Visit again
-`;
+  bill += `${'='.repeat(25)}\nTotal: ₹${order.amount?.toFixed(2)}\n${'='.repeat(25)}\nThank you!\n`;
 
-  // ✅ OPEN A NEW PRINT WINDOW (THIS IS THE KEY)
-  const printWindow = window.open("", "_blank");
+  // ✅ NEW WINDOW - WORKS EVERYWHERE
+  const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=yes');
+  
+  if (!printWindow) {
+    alert('Please allow popups then try again');
+    return;
+  }
 
   printWindow.document.write(`
+    <!DOCTYPE html>
     <html>
-      <head>
-        <title>Print Bill</title>
-        <style>
-          @page {
-            size: 58mm auto;
-            margin: 0;
-          }
-          body {
-            margin: 0;
-            padding: 8px;
-            width: 58mm;
-            font-family: monospace;
-            font-size: 12px;
-          }
-          pre {
-            white-space: pre-wrap;
-          }
-        </style>
-      </head>
-      <body>
-        <pre>${bill}</pre>
-        <script>
-          window.onload = function () {
-            window.print();
-            setTimeout(() => window.close(), 500);
-          };
-        </script>
-      </body>
+    <head>
+      <title>Print Bill</title>
+      <style>
+        @page { size: 58mm auto; margin: 0; }
+        body { 
+          margin: 0; padding: 8px; width: 58mm; 
+          font-family: 'Courier New', monospace; 
+          font-size: 12px; line-height: 1.2;
+        }
+        pre { white-space: pre-wrap; margin: 0; }
+      </style>
+    </head>
+    <body>
+      <pre>${bill}</pre>
+      <script>
+        window.onload = () => {
+          window.focus(); 
+          window.print(); 
+          setTimeout(() => window.close(), 2000);
+        };
+      </script>
+    </body>
     </html>
   `);
-
   printWindow.document.close();
 };
 

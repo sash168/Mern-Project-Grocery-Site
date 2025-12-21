@@ -399,44 +399,13 @@ function Orders() {
                   {loadingDelivery[order._id] ? 'Processing...' : 'Mark Delivered'}
                 </button>
               )}
-{/* 🖨 HIDDEN BILL REF - ALWAYS RENDERED */}
-<div 
-  ref={el => { if (el) componentRefs.current[order._id] = el; }}
-  className="hidden print:!block print-bill-container"
->
-  <pre className="print-bill-text">
-S3 Retail Hub
-=========================
-Invoice: {new Date().getTime()}
-Date: {new Date().toLocaleDateString("en-IN")}
-Customer: {order.address?.name || "Guest"}
-=========================
-{order.items.map((item, idx) => {
-  const name = (item.product?.name || 'Item').slice(0, 20);
-  const price = (item.product?.offerPrice || 0) * (item.quantity || 1);
-  return `${name.padEnd(20)} x${(item.quantity || 1).toString().padStart(2)} ₹${price.toFixed(2)}\n`;
-}).join('')}
-=========================
-Total: ₹{order.amount?.toFixed(2)}
-=========================
-Thank you! Visit again
-  </pre>
-</div>
 
-{/* 🖨 PRINT BUTTON */}
-<button
-  onClick={() => {
-    const billElement = componentRefs.current[order._id];
-    if (billElement) {
-      window.scrollTo(0, 0);
-      setTimeout(() => window.print(), 100);
-    }
-  }}
+              <button
+  onClick={() => printInvoice(order)}  // ← YOUR ORIGINAL
   className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
 >
   Print Invoice
 </button>
-
 
 
             </div>
