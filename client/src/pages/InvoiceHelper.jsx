@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { useAppContext } from "../context/AppContext"; // Assuming you have axios here
 
 // Helper to send print job to backend
