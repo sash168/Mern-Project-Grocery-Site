@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import { toast } from 'sonner';
-import { printInvoice, printInvoiceMobileFriendly, printThermalBill } from '../InvoiceHelper';
+import { printInvoice, sendPrintJobToBackend } from '../InvoiceHelper';
 import { buildBillText } from '../buildBill';
 import PrintBill from '../PrintBill';
 
@@ -399,13 +399,12 @@ function Orders() {
                   {loadingDelivery[order._id] ? 'Processing...' : 'Mark Delivered'}
                 </button>
               )}
-
               <button
-  onClick={() => printInvoice(order)}  // ← YOUR ORIGINAL
-  className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
->
-  Print Invoice
-</button>
+                onClick={() => sendPrintJobToBackend(order, axios)}
+                className="mt-2 px-3 py-1 rounded bg-primary text-white hover:bg-dull-primary text-sm"
+              >
+                Print Invoice
+              </button>
 
 
             </div>

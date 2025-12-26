@@ -10,7 +10,7 @@ export const sendPrintJobToBackend = async (order, axios) => {
       text: JSON.stringify(order) // backend expects "text"
     });
     if (res.data.success || res.data.message) {
-      toast.success(res.data.message || "Print job sent!");
+      toast.success("Sent to printer app");
     } else {
       toast.error("Failed to send print job");
     }
