@@ -3,6 +3,7 @@ import { useAppContext } from "../context/AppContext";
 // import toast from "react-hot-toast";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner"; // or "@/components/ui/use-toast"
+import { sendPrintJobToBackend } from "./InvoiceHelper";
 
 
 const CartItem = ({ product, cartItems, updateCartItem, deleteItemFromCart, navigate, currency }) => (
@@ -99,6 +100,11 @@ const Cart = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [previousDue, setPreviousDue] = useState(0);
   const [payDueNow, setPayDueNow] = useState(0);
+  const [addressSearch, setAddressSearch] = useState("");
+
+  const filteredAddresses = addresses.filter((addr) =>
+    (addr.name || addr.firstName || "").toLowerCase().includes(addressSearch.toLowerCase())
+  );
 
   const addressRef = useRef(null);
 
@@ -206,7 +212,10 @@ const Cart = () => {
             };
           return product;
         });
-
+        
+        if (data.order) {
+          sendPrintJobToBackend(data.order, axios);
+        }
         setCartItems({});
         setProducts(updatedProducts);
         navigate("/my-orders");
@@ -260,26 +269,9 @@ const Cart = () => {
         <div className="relative mt-2" ref={addressRef}>
           <p className="text-gray-600 text-sm">
             {selectedAddress
-              ? [
-                  selectedAddress.name || selectedAddress.firstName || '',
-                  selectedAddress.street,
-                  selectedAddress.addressInfo, // added addressInfo
-                  selectedAddress.city,
-                  selectedAddress.state,
-                  selectedAddress.zipcode,
-                  selectedAddress.phone
-                ]
-                  .filter(Boolean)
-                  .join(", ")
+              ? `${selectedAddress.name} | ${selectedAddress.address} | Phone: ${selectedAddress.phone}`
               : "No address selected"}
           </p>
-          {(selectedAddress?.day || selectedAddress?.street) && (
-              <p className="text-gray-600 text-sm mt-1 font-medium">
-                Delivery Day: 
-                {selectedAddress.day ? ` ${selectedAddress.day}` : ''}
-                {selectedAddress.street ? ` — ${selectedAddress.street}` : ''}
-              </p>
-            )}
 
           <button
             onClick={() => setShowAddress((prev) => !prev)}
@@ -290,7 +282,20 @@ const Cart = () => {
 
           {showAddress && (
             <div className="absolute z-10 top-8 w-full bg-white rounded p-2 shadow-md">
-              {addresses.map((address) => (
+              <input
+              type="text"
+              placeholder="Search by name"
+              value={addressSearch}
+              onChange={(e) => setAddressSearch(e.target.value)}
+              className="w-full border rounded p-2 text-sm mb-2"
+            />
+              {addresses
+              .filter(addr =>
+                (addr.name || addr.firstName || "")
+                  .toLowerCase()
+                  .includes(addressSearch.toLowerCase())
+              )
+              .map((address) => (
                 <div
                   key={address._id}
                   className="flex justify-between items-center p-1 hover:bg-gray-100 rounded text-sm mt-1"
@@ -302,16 +307,15 @@ const Cart = () => {
                       setShowAddress(false);
                     }}
                   >
-                    {[address.name || address.firstName || '',
-                      address.street,
-                      address.addressInfo, // show extra info
-                      address.city,
-                      address.state,
-                      address.zipcode,
-                      address.phone]
-                      .filter(Boolean)
-                      .join(", ")}
+                    <span className="font-medium">{address.name}</span>
+                    <br />
+                    <span className="text-gray-600 text-xs">{address.address}</span>
+                    <br />
+                    <span className="text-gray-600 text-xs">
+                      Phone: {address.phone}
+                    </span>
                   </p>
+
 
                   <button
                     onClick={async (e) => {
@@ -345,26 +349,43 @@ const Cart = () => {
           )}
         </div>
 
-        {previousDue > 0 && (
-          <div className="mt-4 p-3 rounded bg-red-50 border border-red-200">
+        <div className="mt-4 p-3 rounded bg-red-50 border border-red-200">
+          {previousDue > 0 && (
             <p className="text-sm text-red-700 font-medium">
               Previous Due: {currency}{previousDue}
             </p>
+          )}
 
+          <div className="flex gap-2 mt-2">
             <input
               type="number"
               min={0}
-              max={previousDue}
+              max={previousDue + getCardAmount()}
               value={payDueNow}
               onChange={(e) => {
                 const val = Number(e.target.value);
-                if (val <= previousDue) setPayDueNow(val);
+
+                if (isNaN(val)) {
+                  setPayDueNow(0);
+                  return;
+                }
+
+                if (val <= previousDue + getCardAmount()) {
+                  setPayDueNow(val);
+                }
               }}
-              placeholder="Pay due now (optional)"
-              className="mt-2 w-full border rounded p-2 text-sm"
+              placeholder="Pay now"
+              className="flex-1 border rounded p-2 text-sm"
             />
+
+            <button
+              onClick={() => setPayDueNow(previousDue + getCardAmount())}
+              className="bg-primary text-white px-3 rounded hover:bg-dull-primary"
+            >
+              Pay All
+            </button>
           </div>
-        )}
+        </div>
 
 
         <div className="mt-4 space-y-2 text-gray-600">
@@ -382,11 +403,9 @@ const Cart = () => {
           </p>
         </div>
 
-        
-
         <button
           onClick={placeOrder}
-          disabled={!user || !selectedAddress || isPlacingOrder}
+          disabled={isPlacingOrder}
           className={`w-full py-3 mt-4 rounded font-medium transition ${
             !user || !selectedAddress || isPlacingOrder
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"

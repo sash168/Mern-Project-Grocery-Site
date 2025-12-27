@@ -285,25 +285,24 @@ function Orders() {
             <div className="flex flex-col text-sm md:text-base text-black/60 w-full md:w-64 break-words">
               {order.address ? (
                 <>
-                  <p className="text-black/80 font-medium">
-                    {order.address?.name}
+                  <p className="text-black font-medium">
+                    {order.address.name}
                   </p>
 
-                  <p>
-                    {order.address?.day} - {order.address?.street}
+                  <p className="text-black/70 text-sm">
+                    {order.address.address}
                   </p>
 
-                  {order.address?.addressInfo && (
-                    <p>{order.address?.addressInfo}</p>
-                  )}
-
-                  <p>{order.address?.zipcode}</p>
-                  <p>{order.address?.phone}</p>
-
+                  <p className="text-black/70 text-sm">
+                    Phone: {order.address.phone}
+                  </p>
                 </>
               ) : (
-                <p className="text-red-500 font-medium">Address Deleted / Unavailable</p>
+                <p className="text-red-500 font-medium">
+                  Address Deleted / Unavailable
+                </p>
               )}
+
               {/* 💰 Total Amount */}
               <p className="font-semibold text-lg text-black/60 mt-2">
                 Total: {currency}{order.amount}
@@ -319,13 +318,6 @@ function Orders() {
             {/* 📦 Payment + Delivery Info */}
             <div className="flex flex-col text-sm md:text-base text-black/70 w-full md:w-60 space-y-2">
               <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
-              <p>
-                Delivery Day: 
-                <span className="text-black/70 font-medium">
-                   {order.address ? `${order.address.day} - ${order.address.street}` : "N/A"}
-                </span>
-              </p>
-
 
               <p>
                 Payment:

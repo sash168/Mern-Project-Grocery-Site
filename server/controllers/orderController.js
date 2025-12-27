@@ -6,9 +6,12 @@ import mongoose from 'mongoose';
 import Address from '../models/Address.js';
 import { sendDeliverySMS } from './smsController.js';
 
-const applyPaymentFIFO = async ({ userId, addressId, payAmount }) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+const applyPaymentFIFO = async ({ userId, addressId, payAmount, session }) => {
+  const ownSession = !session;
+  if (!session) {
+    session = await mongoose.startSession();
+    session.startTransaction();
+  }
 
   try {
     let remainingPayment = payAmount;
@@ -49,12 +52,12 @@ const applyPaymentFIFO = async ({ userId, addressId, payAmount }) => {
       await ord.save({ session });
     }
 
-    await session.commitTransaction();
+    if (ownSession) await session.commitTransaction();
   } catch (e) {
-    await session.abortTransaction();
+    if (ownSession) await session.abortTransaction();
     throw e;
   } finally {
-    session.endSession();
+    if (ownSession) session.endSession();
   }
 };
 
@@ -63,7 +66,7 @@ export const placeOrderCOD = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { items, address } = req.body;
+    const { items, address, paidAmount = 0 } = req.body;
     const { userId } = req;
 
     if (!address || !items || items.length === 0) {
@@ -92,7 +95,7 @@ export const placeOrderCOD = async (req, res) => {
       amount += product.offerPrice * item.quantity;
     }
 
-    await Order.create([{
+    const [newOrder] = await Order.create([{
       userId,
       items,
       amount,
@@ -103,13 +106,34 @@ export const placeOrderCOD = async (req, res) => {
       paymentStatus: `Due ₹${amount}`
     }], { session });
 
+    // If paidAmount is provided, apply payment
+    if (paidAmount > 0) {
+      await applyPaymentFIFO({
+        userId,
+        addressId: address,
+        payAmount: paidAmount,
+        session
+      });
+
+      // Update the new order's paidAmount/dueAmount/paymentStatus
+      const updatedOrder = await Order.findById(newOrder._id).session(session);
+      updatedOrder.paidAmount = Math.min(paidAmount, updatedOrder.amount);
+      updatedOrder.dueAmount = Math.max(0, updatedOrder.amount - paidAmount);
+      updatedOrder.paymentStatus = updatedOrder.dueAmount === 0 ? "Fully Paid" : `Due ₹${updatedOrder.dueAmount}`;
+      await updatedOrder.save({ session });
+    }
+
     await session.commitTransaction();
+
+    // after commitTransaction()
+    const finalOrder = await Order.findById(newOrder._id)
+      .populate("items.product address");
 
     return res.json({
       success: true,
-      message: "Order placed successfully (COD)"
+      message: "Order placed successfully (COD)",
+      order: finalOrder
     });
-
   } catch (e) {
     await session.abortTransaction();
     return res.json({ success: false, message: e.message });

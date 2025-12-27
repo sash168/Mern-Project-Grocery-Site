@@ -33,11 +33,10 @@ function AddAddress() {
   const { axios, user, navigate } = useAppContext();
   const [address, setAddress] = useState({
     name: user?.name || "",
-    phone: user?.phone || "",
-    street: "",
-    zipcode: "",
-    addressInfo: ""
+    address: "",
+    phone: user?.phone || ""
   });
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,10 +59,9 @@ function AddAddress() {
     e.preventDefault();
 
     if (!address.name.trim()) return toast.error("Name is required");
-    if (!day) return toast.error("Please select a delivery day");
-    if (!address.street) return toast.error("Please select a location");
-    if (!address.zipcode) return toast.error("Pin Code is required");
+    if (!address.address.trim()) return toast.error("Address is required");
     if (!address.phone.trim()) return toast.error("Phone number is required");
+
 
     try {
       const { data } = await axios.post('/api/address/add', { address: { ...address, day } });
@@ -131,29 +129,29 @@ function AddAddress() {
       <div className='flex flex-col-reverse md:flex-row justify-between items-center mt-10 gap-8'>
         <div className='flex-1 max-w-md w-full'>
           <form onSubmit={onSubmitHandler} className='space-y-4 text-sm'>
-            <InputField handleChange={handleChange} address={address} name='name' type='text' placeholder='Name *' />
-
-            <DropdownField
-              name='street'
-              options={streetOptions}
+            <InputField
               handleChange={handleChange}
-              value={address.street}
-              placeholder="Select Location *"
+              address={address}
+              name="name"
+              type="text"
+              placeholder="Name *"
             />
 
             <InputField
-                handleChange={handleChange}
-                address={address}
-                name='addressInfo'
-                type='text'
-                placeholder='Apartment, Landmark, or any additional info (optional)'
-                />
+              handleChange={handleChange}
+              address={address}
+              name="address"
+              type="text"
+              placeholder="Full Address *"
+            />
 
-
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-              <InputField handleChange={handleChange} address={address} name='zipcode' type='number' placeholder='Pin Code *' />
-              <InputField handleChange={handleChange} address={address} name='phone' type='text' placeholder='Phone Number *' />
-            </div>
+            <InputField
+              handleChange={handleChange}
+              address={address}
+              name="phone"
+              type="text"
+              placeholder="Phone Number *"
+            />
 
             <button className='w-full mt-6 bg-primary text-white py-3 hover:bg-dull-primary transition cursor-pointer uppercase'>
               Save Address
