@@ -1,7 +1,0 @@
-{
-  "name": "BillingStore",
-  "displayName": "BillingStore",
-  "android": {
-    "package": "com.anonymous.billingstore"
-  }
-}

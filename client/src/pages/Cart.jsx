@@ -97,6 +97,8 @@ const Cart = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [previousDue, setPreviousDue] = useState(0);
+  const [payDueNow, setPayDueNow] = useState(0);
 
   const addressRef = useRef(null);
 
@@ -141,6 +143,28 @@ const Cart = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const fetchDue = async () => {
+      if (!selectedAddress?._id) return;
+
+      try {
+        const { data } = await axios.get(
+          `/api/order/due?addressId=${selectedAddress._id}`
+        );
+
+        if (data.success) {
+          setPreviousDue(data.due);
+          setPayDueNow(0);
+        }
+      } catch (err) {
+        toast.error("Failed to fetch previous due");
+      }
+    };
+
+    fetchDue();
+  }, [selectedAddress]);
+
+
   const placeOrder = async () => {
     if (isPlacingOrder) return;   // Prevent double click
     setIsPlacingOrder(true);
@@ -167,6 +191,7 @@ const Cart = () => {
           quantity: item.quantity,
         })),
         address: selectedAddress._id,
+        paidAmount: payDueNow
       });
 
       if (data.success) {
@@ -320,6 +345,28 @@ const Cart = () => {
           )}
         </div>
 
+        {previousDue > 0 && (
+          <div className="mt-4 p-3 rounded bg-red-50 border border-red-200">
+            <p className="text-sm text-red-700 font-medium">
+              Previous Due: {currency}{previousDue}
+            </p>
+
+            <input
+              type="number"
+              min={0}
+              max={previousDue}
+              value={payDueNow}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (val <= previousDue) setPayDueNow(val);
+              }}
+              placeholder="Pay due now (optional)"
+              className="mt-2 w-full border rounded p-2 text-sm"
+            />
+          </div>
+        )}
+
+
         <div className="mt-4 space-y-2 text-gray-600">
           <p className="flex justify-between">
             <span>Price</span>
@@ -334,6 +381,8 @@ const Cart = () => {
             <span>{currency}{getCardAmount().toFixed(2)}</span>
           </p>
         </div>
+
+        
 
         <button
           onClick={placeOrder}

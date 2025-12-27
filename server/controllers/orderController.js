@@ -6,6 +6,58 @@ import mongoose from 'mongoose';
 import Address from '../models/Address.js';
 import { sendDeliverySMS } from './smsController.js';
 
+const applyPaymentFIFO = async ({ userId, addressId, payAmount }) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    let remainingPayment = payAmount;
+
+    const dueOrders = await Order.find({
+      userId,
+      address: addressId,
+      dueAmount: { $gt: 0 }
+    }).sort({ createdAt: 1 }).session(session);
+
+    for (const ord of dueOrders) {
+      if (remainingPayment <= 0) break;
+
+      const currentDue = Number(ord.dueAmount);
+      if (remainingPayment >= currentDue) {
+        ord.paidAmount += currentDue;
+        ord.dueAmount = 0;
+        ord.paymentStatus = "Fully Paid";
+        remainingPayment -= currentDue;
+      } else {
+        ord.paidAmount += remainingPayment;
+        ord.dueAmount = currentDue - remainingPayment;
+        ord.paymentStatus = `Due ₹${ord.dueAmount}`;
+        remainingPayment = 0;
+      }
+      await ord.save({ session });
+    }
+
+    const allOrders = await Order.find({
+      userId,
+      address: addressId
+    }).sort({ createdAt: 1 }).session(session);
+
+    let runningDue = 0;
+    for (const ord of allOrders) {
+      ord.carriedFromPrevious = runningDue;
+      runningDue += ord.dueAmount;
+      await ord.save({ session });
+    }
+
+    await session.commitTransaction();
+  } catch (e) {
+    await session.abortTransaction();
+    throw e;
+  } finally {
+    session.endSession();
+  }
+};
+
 export const placeOrderCOD = async (req, res) => {
   try {
     const { items, address } = req.body;
@@ -18,46 +70,58 @@ export const placeOrderCOD = async (req, res) => {
     const addressDoc = await Address.findById(address);
     if (!addressDoc) return res.json({ success: false, message: "Invalid address" });
 
-    let amount = 0;
-    for (const item of items) {
-      const product = await Product.findById(item.product);
-      if (!product) continue;
-      amount += product.offerPrice * item.quantity;
-      product.quantity = Math.max(product.quantity - item.quantity, 0);
-      await product.save();
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      let amount = 0;
+
+      for (const item of items) {
+        const product = await Product.findById(item.product).session(session);
+        if (!product) throw new Error("Product not found");
+
+        const updated = await Product.updateOne(
+          { _id: item.product, quantity: { $gte: item.quantity } },
+          { $inc: { quantity: -item.quantity } },
+          { session }
+        );
+
+        if (updated.matchedCount === 0) {
+          throw new Error("Insufficient stock");
+        }
+
+        amount += product.offerPrice * item.quantity;
+      }
+
+      const order = await Order.create([{
+        userId,
+        items,
+        amount,
+        address,
+        paymentType: 'COD',
+        paidAmount: 0,
+        dueAmount: amount,
+        paymentStatus: `Due ₹${amount}`
+      }], { session });
+
+      if (paidNow > 0) {
+        await applyPaymentFIFO({
+          userId,
+          addressId: address,
+          payAmount: paidNow
+        });
+      }
+
+      await session.commitTransaction();
+      return res.json({ success: true, message: "Order Placed Successfully" });
+
+    } catch (e) {
+      await session.abortTransaction();
+      return res.json({ success: false, message: e.message });
+    } finally {
+      session.endSession();
     }
-
-    amount = Math.floor(amount);
-
-    // --- NEW: sum all previous unpaid dues for this user ---
-    const unpaidOrders = await Order.find({ userId, dueAmount: { $gt: 0 } });
-    const prevDue = unpaidOrders.reduce((acc, o) => {
-      const due = Number(o.dueAmount ?? (o.amount - (o.paidAmount || 0)));
-      console.log("Calculating due amount:", due);
-      return acc + (isNaN(due) ? 0 : due);
-    }, 0);
-
-    console.log("Previous due amount ", unpaidOrders, "is:", prevDue);
-
-    const totalDue = prevDue + amount;
-
-    const order = await Order.create({
-      userId,
-      items,
-      amount,
-      address,
-      paymentType: 'COD',
-      paidAmount: 0,
-      dueAmount: totalDue,
-      carriedFromPrevious: prevDue,   // <--- ADD THIS
-      paymentStatus: `Due ₹${totalDue}`,
-    });
-
-
-    console.log("Creating order with amount:", amount, "carriedFromPrevious:", prevDue);
-
-    return res.json({ success: true, message: "Order Placed Successfully" });
-  } catch (e) {
+    } catch (e) {
     console.log(e.message);
     res.json({ success: false, message: "Error placing COD order: " + e.message });
   }
@@ -78,48 +142,60 @@ export const placeOrderStripe = async (req, res) => {
 
     let productData = [];
     let amount = 0;
-    for (const item of items) {
-      const product = await Product.findById(item.product);
-      if (!product) continue;
 
-      productData.push({
-        name: product.name,
-        price: product.offerPrice,
-        quantity: item.quantity,
-      });
+    // 🔹 MongoDB transaction session
+    const dbSession = await mongoose.startSession();
+    dbSession.startTransaction();
 
-      amount += product.offerPrice * item.quantity;
-      product.quantity = Math.max(product.quantity - item.quantity, 0);
-      await product.save();
+    let order;
+
+    try {
+      for (const item of items) {
+        const product = await Product.findById(item.product).session(dbSession);
+        if (!product) throw new Error("Product not found");
+
+        const updated = await Product.updateOne(
+          { _id: item.product, quantity: { $gte: item.quantity } },
+          { $inc: { quantity: -item.quantity } },
+          { dbSession }
+        );
+
+        if (updated.matchedCount === 0) {
+          throw new Error("Insufficient stock");
+        }
+
+        productData.push({
+          name: product.name,
+          price: product.offerPrice,
+          quantity: item.quantity
+        });
+
+        amount += product.offerPrice * item.quantity;
+      }
+
+      order = await Order.create([{
+        userId,
+        items,
+        amount,
+        address,
+        paymentType: 'Online',
+        paidAmount: 0,
+        dueAmount: amount,
+        paymentStatus: `Due ₹${amount}`
+      }], { session: dbSession });
+
+      await dbSession.commitTransaction();
+    } catch (e) {
+      await dbSession.abortTransaction();
+      throw e;
+    } finally {
+      dbSession.endSession();
     }
 
-    amount = Math.floor(amount);
-
-    // --- NEW: sum all previous unpaid dues for this user ---
-    const unpaidOrders = await Order.find({ userId, dueAmount: { $gt: 0 } });
-    const prevDue = unpaidOrders.reduce((acc, o) => {
-      const due = Number(o.dueAmount ?? (o.amount - (o.paidAmount || 0)));
-      return acc + (isNaN(due) ? 0 : due);
-    }, 0);
-
-    const totalDue = prevDue + amount;
-
-    const order = await Order.create({
-      userId,
-      items,
-      amount,
-      address,
-      paymentType: 'Online',
-      paidAmount: 0,
-      dueAmount: totalDue,
-      carriedFromPrevious: prevDue,   // <--- ADD THIS
-      paymentStatus: `Due ₹${totalDue}`,
-    });
-
-
+    // 🔹 Stripe session (different variable!)
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
 
-    const line_items = productData.map((item) => ({
+    const line_items = productData.map(item => ({
       price_data: {
         currency: 'usd',
         product_data: { name: item.name },
@@ -128,22 +204,21 @@ export const placeOrderStripe = async (req, res) => {
       quantity: item.quantity,
     }));
 
-    const session = await stripeInstance.checkout.sessions.create({
+    const stripeSession = await stripeInstance.checkout.sessions.create({
       line_items,
       mode: "payment",
       success_url: `${origin}/loader?next=my-orders`,
       cancel_url: `${origin}/cart`,
-      metadata: { orderId: order._id.toString(), userId },
+      metadata: { orderId: order[0]._id.toString(), userId },
     });
 
-    return res.json({ success: true, url: session.url });
+    return res.json({ success: true, url: stripeSession.url });
+
   } catch (e) {
-    console.log(e.message);
-    res.json({ success: false, message: "Error placing online order: " + e.message });
+    console.error(e.message);
+    return res.json({ success: false, message: e.message });
   }
 };
-
-
 
 
 //stripe webhook to verify payment
@@ -173,6 +248,15 @@ export const stripeWebhooks = async (req, res) => {
             })
 
             const { orderId, userId } = session.data[0].metadata;
+
+            const order = await Order.findById(orderId);
+
+            await applyPaymentFIFO({
+              userId,
+              addressId: order.address,
+              payAmount: order.amount
+            });
+
 
             //mark payment as paid
             await Order.findByIdAndUpdate(orderId, { isPaid: true })
@@ -237,87 +321,40 @@ export const getAllOrders = async (req, res) => {
     }
 }
 
-// ✅ Update payment status or due amount
 export const updatePayment = async (req, res) => {
   try {
-    // support both :orderId and :id just in case
     const orderId = req.params.orderId || req.params.id;
     const payAmount = Number(req.body.paidAmount);
-
-    console.log("Updating payment for order:", orderId, "with amount:", payAmount);
 
     if (!payAmount || isNaN(payAmount) || payAmount <= 0) {
       return res.json({ success: false, message: "Invalid payment amount" });
     }
 
-    // find the order requested (optional - to validate the user and show context)
-    const mainOrder = orderId ? await Order.findById(orderId) : null;
-    if (orderId && !mainOrder) return res.json({ success: false, message: "Order not found" });
-
-    const userId = mainOrder ? mainOrder.userId : req.body.userId || req.userId;
-    if (!userId) return res.json({ success: false, message: "User ID not found" });
-
-    // get all unpaid orders for the user, oldest first
-    const dueOrders = await Order.find({
-      userId,
-      $or: [{ paymentStatus: { $regex: /^Due/ } }, { dueAmount: { $gt: 0 } }]
-    }).sort({ createdAt: 1 });
-
-    let remainingPayment = payAmount;
-
-    for (const ord of dueOrders) {
-      if (remainingPayment <= 0) break;
-
-      const currentDue = Number(ord.dueAmount ?? (ord.amount - (ord.paidAmount || 0)));
-      if (isNaN(currentDue) || currentDue <= 0) continue;
-
-      if (remainingPayment >= currentDue) {
-        // fully pay this order
-        ord.paidAmount = (ord.paidAmount || 0) + currentDue;
-        ord.dueAmount = 0;
-        ord.paymentStatus = "Fully Paid";
-        remainingPayment -= currentDue;
-      } else {
-        // partial payment
-        ord.paidAmount = (ord.paidAmount || 0) + remainingPayment;
-        ord.dueAmount = currentDue - remainingPayment;
-        ord.paymentStatus = `Due ₹${ord.dueAmount}`;
-        remainingPayment = 0;
-      }
-
-      await ord.save();
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
     }
 
-    // 🔄 Recalculate all orders after payment
-    const allOrders = await Order.find({ userId }).sort({ createdAt: 1 });
-
-    let runningDue = 0;
-
-    for (const ord of allOrders) {
-      const total = Number(ord.amount || 0);
-      const paid = Number(ord.paidAmount || 0);
-      const remaining = Math.max(0, total - paid);
-
-      ord.dueAmount = remaining;
-      ord.carriedFromPrevious = runningDue;
-      ord.paymentStatus = remaining === 0 ? "Fully Paid" : `Due ₹${remaining}`;
-
-      runningDue += remaining;
-
-      await ord.save();
-    }
-
+    await applyPaymentFIFO({
+      userId: order.userId,
+      addressId: order.address,
+      payAmount
+    });
 
     return res.json({
       success: true,
-      message: "Payment applied to outstanding orders successfully."
+      message: "Payment applied successfully"
     });
 
   } catch (err) {
     console.error(err);
-    return res.json({ success: false, message: "Something went wrong: " + err.message });
+    return res.json({
+      success: false,
+      message: err.message
+    });
   }
 };
+
 
 
 
@@ -358,6 +395,30 @@ export const updateDelivery = async (req, res) => {
   } catch (e) {
     console.error("updateDelivery error:", e);
     return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// controllers/orderController.js
+export const getAddressDue = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { addressId } = req.query;
+
+    if (!addressId) {
+      return res.json({ success: false, message: "Address required" });
+    }
+
+    const orders = await Order.find({
+      userId,
+      address: addressId,
+      dueAmount: { $gt: 0 }
+    });
+
+    const totalDue = orders.reduce((sum, o) => sum + Number(o.dueAmount || 0), 0);
+
+    return res.json({ success: true, due: totalDue });
+  } catch (e) {
+    return res.json({ success: false, message: e.message });
   }
 };
 

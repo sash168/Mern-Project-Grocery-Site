@@ -13,6 +13,7 @@ ordreRouter.get('/user', authUser, getUserOrders);
 ordreRouter.get('/seller', authSeller, getAllOrders);
 ordreRouter.put('/updatePayment/:orderId', authSeller, updatePayment);
 ordreRouter.put('/updateDelivery/:id', authSeller, updateDelivery);
+ordreRouter.get('/due', authUser, getAddressDue);
 // ordreRouter.get("/fix-old-orders", async (req, res) => {
 //   try {
 //     const orders = await Order.find({ dueAmount: 0 });
