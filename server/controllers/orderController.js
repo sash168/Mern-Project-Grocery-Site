@@ -59,73 +59,65 @@ const applyPaymentFIFO = async ({ userId, addressId, payAmount }) => {
 };
 
 export const placeOrderCOD = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { items, address } = req.body;
     const { userId } = req;
 
-    if (!address || !mongoose.Types.ObjectId.isValid(address) || !items || items.length === 0) {
-      return res.json({ success: false, message: "Address and valid details are required" });
+    if (!address || !items || items.length === 0) {
+      throw new Error("Address and items are required");
     }
 
     const addressDoc = await Address.findById(address);
-    if (!addressDoc) return res.json({ success: false, message: "Invalid address" });
+    if (!addressDoc) throw new Error("Invalid address");
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    let amount = 0;
 
-    try {
-      let amount = 0;
+    for (const item of items) {
+      const product = await Product.findById(item.product).session(session);
+      if (!product) throw new Error("Product not found");
 
-      for (const item of items) {
-        const product = await Product.findById(item.product).session(session);
-        if (!product) throw new Error("Product not found");
+      const updated = await Product.updateOne(
+        { _id: item.product, quantity: { $gte: item.quantity } },
+        { $inc: { quantity: -item.quantity } },
+        { session }
+      );
 
-        const updated = await Product.updateOne(
-          { _id: item.product, quantity: { $gte: item.quantity } },
-          { $inc: { quantity: -item.quantity } },
-          { session }
-        );
-
-        if (updated.matchedCount === 0) {
-          throw new Error("Insufficient stock");
-        }
-
-        amount += product.offerPrice * item.quantity;
+      if (updated.matchedCount === 0) {
+        throw new Error("Insufficient stock");
       }
 
-      const order = await Order.create([{
-        userId,
-        items,
-        amount,
-        address,
-        paymentType: 'COD',
-        paidAmount: 0,
-        dueAmount: amount,
-        paymentStatus: `Due ₹${amount}`
-      }], { session });
-
-      if (paidNow > 0) {
-        await applyPaymentFIFO({
-          userId,
-          addressId: address,
-          payAmount: paidNow
-        });
-      }
-
-      await session.commitTransaction();
-      return res.json({ success: true, message: "Order Placed Successfully" });
-
-    } catch (e) {
-      await session.abortTransaction();
-      return res.json({ success: false, message: e.message });
-    } finally {
-      session.endSession();
+      amount += product.offerPrice * item.quantity;
     }
-    } catch (e) {
-    console.log(e.message);
-    res.json({ success: false, message: "Error placing COD order: " + e.message });
+
+    await Order.create([{
+      userId,
+      items,
+      amount,
+      address,
+      paymentType: "COD",
+      paidAmount: 0,
+      dueAmount: amount,
+      paymentStatus: `Due ₹${amount}`
+    }], { session });
+
+    await session.commitTransaction();
+
+    return res.json({
+      success: true,
+      message: "Order placed successfully (COD)"
+    });
+
+  } catch (e) {
+    await session.abortTransaction();
+    return res.json({ success: false, message: e.message });
+  } finally {
+    session.endSession();
   }
 };
+
 
 export const placeOrderStripe = async (req, res) => {
   try {
@@ -157,7 +149,7 @@ export const placeOrderStripe = async (req, res) => {
         const updated = await Product.updateOne(
           { _id: item.product, quantity: { $gte: item.quantity } },
           { $inc: { quantity: -item.quantity } },
-          { dbSession }
+          { session: dbSession }
         );
 
         if (updated.matchedCount === 0) {
