@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { assets } from '../assets/assets';
-import { downloadInvoicePDF, printInvoice } from './InvoiceHelper';
+import { downloadInvoicePDF } from './InvoiceHelper';
 
 function MyOrder() {
   const [myOrders, setMyOrders] = useState([]);

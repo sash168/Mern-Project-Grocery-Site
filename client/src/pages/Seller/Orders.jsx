@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { assets } from '../../assets/assets';
 import { toast } from 'sonner';
-import { printInvoice, sendPrintJobToBackend } from '../InvoiceHelper';
+import { sendPrintJobToBackend } from '../InvoiceHelper';
 import { buildBillText } from '../buildBill';
 import PrintBill from '../PrintBill';
 

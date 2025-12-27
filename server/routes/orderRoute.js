@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllOrders, getUserOrders, placeOrderCOD, placeOrderStripe, updateDelivery, updatePayment } from '../controllers/orderController.js';
+import { getAddressDue, getAllOrders, getUserOrders, placeOrderCOD, placeOrderStripe, updateDelivery, updatePayment } from '../controllers/orderController.js';
 import authSeller from '../middlewares/authSeller.js';
 import authUser from '../middlewares/authUser.js';
 import Order from "../models/Order.js";
